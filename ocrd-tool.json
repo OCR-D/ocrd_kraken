@@ -2,7 +2,7 @@
   "git_url": "https://github.com/ocr-d/ocrd_kraken",
   "tools": [
     {
-      "tags": ["Binarisierung"],
+      "tags": ["Bildvorverarbeitung"],
       "description": "Binarize images",
       "binary": "ocrd_kraken_binarize",
       "step": "preprocessing/binarization"
