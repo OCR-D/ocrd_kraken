@@ -1,15 +1,3 @@
--e .
--e ../core
-
+ocrd
 click
-lxml
-jsonschema
-Flask
-git+https://github.com/smarnach/pyexiftool.git#egg=pyexiftool
-pyaml
-
 git+https://github.com/mittagessen/kraken#egg=kraken
-opencv-python
-requests
-Pillow
-numpy
