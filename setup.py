@@ -2,7 +2,7 @@
 """
 Installs one binary:
 
-    - ocrd_kraken_binarize
+    - ocrd-kraken-binarize
 """
 import codecs
 
@@ -25,10 +25,13 @@ setup(
     license=LICENSE,
     packages=find_packages(exclude=('tests', 'docs')),
     install_requires=[
+        'ocrd >= 0.0.4',
+        'kraken',
+        'click',
     ],
     entry_points={
         'console_scripts': [
-            'ocrd_kraken_binarize=ocrd_kraken.cli:ocrd_kraken_binarize',
+            'ocrd-kraken-binarize=ocrd_kraken.cli:ocrd_kraken_binarize',
         ]
     },
 )

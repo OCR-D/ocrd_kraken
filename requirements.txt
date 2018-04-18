@@ -1,12 +1,3 @@
 ocrd
-
-click
-lxml
-jsonschema
-pyaml
-
 kraken
-opencv-python
-requests
-Pillow
-numpy
+click
