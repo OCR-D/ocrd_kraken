@@ -4,7 +4,7 @@
     {
       "tags": ["Image preprocessing"],
       "description": "Binarize images with kraken",
-      "binary": "ocrd_kraken_binarize",
+      "executable": "ocrd-kraken-binarize",
       "step": "preprocessing/binarization"
     }
   ]

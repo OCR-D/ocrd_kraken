@@ -28,7 +28,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'ocrd_kraken_binarize=ocrd_kraken.cli:ocrd_kraken_binarize',
+            'ocrd-kraken-binarize=ocrd_kraken.cli:ocrd_kraken_binarize',
         ]
     },
 )
