@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import kraken
+import kraken # pylint: disable=import-error
 from ocrd.utils import getLogger
 from ocrd import Processor, OcrdPage # pylint: disable=no-name-in-module
 
@@ -11,8 +11,9 @@ class KrakenBinarize(Processor):
         """
         Performs the binarization.
         """
+        log.debug('Level of operation: '%s'', self.parameter['level-of-operation'])
         for (n, input_file) in enumerate(self.input_files):
-            log.info("INPUT FILE %i / %s", n, input_file)
+            log.info("XXX INPUT FILE %i / %s", n, input_file)
             self.workspace.download_file(input_file)
             page = OcrdPage.from_file(input_file)
             image_url = page.imageFileName
