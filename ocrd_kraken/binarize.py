@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import kraken
-from ocrd.utils import getLogger, mets_file_id
-from ocrd import Processor, OcrdPage, MIMETYPE_PAGE
+from ocrd.utils import getLogger
+from ocrd import Processor, OcrdPage # pylint: disable=no-name-in-module
 
 log = getLogger('processor.KrakenBinarize')
 

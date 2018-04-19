@@ -1,11 +1,22 @@
 {
-  "git_url": "https://github.com/ocr-d/ocrd_kraken",
+  "git_url": "https://github.com/OCR-D/ocrd_kraken",
   "tools": [
     {
-      "tags": ["Image preprocessing"],
-      "description": "Binarize images with kraken",
       "executable": "ocrd-kraken-binarize",
-      "step": "preprocessing/binarization"
+      "tags": ["Image preprocessing"],
+      "step": "preprocessing/optimization/binarization",
+      "description": "Binarize images with kraken",
+      "parameters": {
+        "structure-level": {
+          "type": "string",
+          "default": "page",
+          "enum": [
+            "page",
+            "region",
+            "line"
+          ]
+        }
+      }
     }
   ]
 }

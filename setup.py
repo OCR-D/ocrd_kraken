@@ -2,17 +2,14 @@
 """
 Installs one binary:
 
-    - ocrd_kraken_binarize
+    - ocrd-kraken-binarize
 """
 import codecs
 
 from setuptools import setup, find_packages
 
-with codecs.open('README.md', encoding='utf-8') as f:
+with codecs.open('README.rst', encoding='utf-8') as f:
     README = f.read()
-
-with codecs.open('LICENSE', encoding='utf-8') as f:
-    LICENSE = f.read().encode('utf-8')
 
 setup(
     name='ocrd_kraken',
@@ -22,9 +19,12 @@ setup(
     author='Konstantin Baierer, Kay-Michael Würzner',
     author_email='unixprog@gmail.com, wuerzner@gmail.com',
     url='https://github.com/OCR-D/ocrd_kraken',
-    license=LICENSE,
+    license='Apache License 2.0',
     packages=find_packages(exclude=('tests', 'docs')),
     install_requires=[
+        'ocrd >= 0.0.4',
+        'kraken',
+        'click',
     ],
     entry_points={
         'console_scripts': [
