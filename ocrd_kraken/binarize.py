@@ -11,7 +11,7 @@ class KrakenBinarize(Processor):
         """
         Performs the binarization.
         """
-        log.debug('Level of operation: '%s'', self.parameter['level-of-operation'])
+        log.debug('Level of operation: "%s"', self.parameter['level-of-operation'])
         for (n, input_file) in enumerate(self.input_files):
             log.info("XXX INPUT FILE %i / %s", n, input_file)
             self.workspace.download_file(input_file)
