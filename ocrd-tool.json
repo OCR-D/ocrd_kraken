@@ -7,7 +7,7 @@
       "step": "preprocessing/optimization/binarization",
       "description": "Binarize images with kraken",
       "parameters": {
-        "structure-level": {
+        "level-of-operation": {
           "type": "string",
           "default": "page",
           "enum": [
