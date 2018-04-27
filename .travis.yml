@@ -2,6 +2,7 @@ language: python
 python:
   - 3.6
 install:
+  - sudo apt-get install libimage-exiftool-perl
   - make deps-pip deps-pip-test
 script:
   - make assets test OCRD_BASEURL="https://github.com/OCR-D/ocrd-assets/raw/master/data/"
