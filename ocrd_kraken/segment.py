@@ -1,0 +1,56 @@
+from __future__ import absolute_import
+import kraken.pageseg as pageseg
+from ocrd import Processor, MIMETYPE_PAGE
+from ocrd.utils import getLogger, polygon_from_points, mets_file_id, points_from_x0y0x1y1
+import ocrd.model.ocrd_page as ocrd_page
+from  ocrd.model.ocrd_page import TextRegionType, TextLineType, CoordsType, to_xml
+
+log = getLogger('processor.KrakenSegment')
+
+class KrakenSegment(Processor):
+
+    def process(self):
+        """
+        Segment with kraken
+        """
+        log.debug('Level of operation: "%s"', self.parameter['level-of-operation'])
+        for (n, input_file) in enumerate(self.input_files):
+            log.info("INPUT FILE %i / %s", n, input_file)
+            downloaded_file = self.workspace.download_file(input_file)
+            log.info("downloaded_file %s", downloaded_file)
+            pcgts = ocrd_page.from_file(downloaded_file)
+            # TODO binarized variant from get_AlternativeImage()
+            image_url = pcgts.get_Page().imageFilename
+            log.info("pcgts %s", pcgts)
+
+            im = self.workspace.resolve_image_as_pil(image_url)
+
+            # TODO parameters
+            text_direction = 'horizontal-lr'
+            script_detect = False
+            scale = None
+            maxcolseps = 2
+            black_colseps = False
+
+            log.info('Segmenting')
+            res = pageseg.segment(im, text_direction, scale, maxcolseps, black_colseps)
+            if script_detect:
+                res = pageseg.detect_scripts(im, res)
+
+            dummyRegion = TextRegionType()
+            pcgts.get_Page().add_TextRegion(dummyRegion)
+            #  print(res)
+            for lineno, box in enumerate(res['boxes']):
+                textline = TextLineType(
+                    id=mets_file_id("line", lineno),
+                    Coords=CoordsType(points=points_from_x0y0x1y1(box))
+                )
+                dummyRegion.add_TextLine(textline)
+            ID = mets_file_id(self.output_file_grp, n)
+            self.add_output_file(
+                ID=ID,
+                file_grp=self.output_file_grp,
+                basename="%s.xml" % ID,
+                mimetype=MIMETYPE_PAGE,
+                content=to_xml(pcgts).encode('utf-8')
+            )
