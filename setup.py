@@ -22,13 +22,14 @@ setup(
     license='Apache License 2.0',
     packages=find_packages(exclude=('tests', 'docs')),
     install_requires=[
-        'ocrd >= 0.2.0',
+        'ocrd >= 0.2.2',
         'kraken',
         'click',
     ],
     entry_points={
         'console_scripts': [
             'ocrd-kraken-binarize=ocrd_kraken.cli:ocrd_kraken_binarize',
+            'ocrd-kraken-segment=ocrd_kraken.cli:ocrd_kraken_segment',
         ]
     },
 )
