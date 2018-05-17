@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Installs one binary:
+Installs two binaries:
 
     - ocrd-kraken-binarize
+    - ocrd-kraken-segment
 """
 import codecs
 
@@ -26,6 +27,9 @@ setup(
         'kraken',
         'click',
     ],
+    package_data={
+        '': ['*.json', '*.yml', '*.yaml'],
+    },
     entry_points={
         'console_scripts': [
             'ocrd-kraken-binarize=ocrd_kraken.cli:ocrd_kraken_binarize',
