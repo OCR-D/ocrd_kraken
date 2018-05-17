@@ -5,9 +5,15 @@ from ocrd import Processor, MIMETYPE_PAGE # pylint: disable=no-name-in-module
 from ocrd.utils import getLogger, polygon_from_points, mets_file_id
 import ocrd.model.ocrd_page as ocrd_page
 
+from ocrd_kraken.config import OCRD_TOOL
+
 log = getLogger('processor.KrakenBinarize')
 
 class KrakenBinarize(Processor):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['ocrd_tool'] = OCRD_TOOL['tools'][1]
+        super(KrakenBinarize, self).__init__(*args, **kwargs)
 
     def process(self):
         """
