@@ -1,12 +1,10 @@
 {
   "git_url": "https://github.com/OCR-D/ocrd_kraken",
-  "tools": {
-    "ocrd-kraken-binarize": {
+  "tools": [
+    {
       "executable": "ocrd-kraken-binarize",
-      "category": "Image preprocessing",
-      "steps": [
-        "preprocessing/optimization/binarization"
-      ],
+      "tags": ["Image preprocessing"],
+      "step": "preprocessing/optimization/binarization",
       "description": "Binarize images with kraken",
       "parameters": {
         "level-of-operation": {
@@ -20,15 +18,12 @@
         }
       }
     },
-    "ocrd-kraken-segment": {
+    {
       "executable": "ocrd-kraken-segment",
-      "category": "Layout analysis",
-      "steps": [
-        "layout/segmentation/region"
-      ],
-      "description": "Block segmentation with kraken",
+      "tags": ["Layout analysis"],
+      "step": "layout/segmentation/region",
+      "description": "Region detection with kraken",
       "parameters": {}
     }
-
-  }
+  ]
 }

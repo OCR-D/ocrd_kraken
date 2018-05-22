@@ -1,19 +1,24 @@
 from __future__ import absolute_import
 import kraken.pageseg as pageseg
 from ocrd import Processor, MIMETYPE_PAGE
-from ocrd.utils import getLogger, polygon_from_points, mets_file_id, points_from_x0y0x1y1
+from ocrd.utils import getLogger, mets_file_id, points_from_x0y0x1y1
 import ocrd.model.ocrd_page as ocrd_page
-from  ocrd.model.ocrd_page import TextRegionType, TextLineType, CoordsType, to_xml
+from ocrd.model.ocrd_page import TextRegionType, TextLineType, CoordsType, to_xml
+
+from ocrd_kraken.config import OCRD_TOOL
 
 log = getLogger('processor.KrakenSegment')
 
 class KrakenSegment(Processor):
 
+    def __init__(self, *args, **kwargs):
+        kwargs['ocrd_tool'] = OCRD_TOOL['tools'][1]
+        super(KrakenSegment, self).__init__(*args, **kwargs)
+
     def process(self):
         """
         Segment with kraken
         """
-        log.debug('Level of operation: "%s"', self.parameter['level-of-operation'])
         for (n, input_file) in enumerate(self.input_files):
             log.info("INPUT FILE %i / %s", n, input_file)
             downloaded_file = self.workspace.download_file(input_file)
