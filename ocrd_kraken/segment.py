@@ -31,6 +31,7 @@ class KrakenSegment(Processor):
             im = self.workspace.resolve_image_as_pil(image_url)
 
             log.info('Segmenting')
+            log.info('Params %s' % self.parameter)
             res = pageseg.segment(
                 im,
                 self.parameter['text_direction'],

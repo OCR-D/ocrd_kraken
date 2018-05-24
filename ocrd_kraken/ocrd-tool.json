@@ -1,29 +1,45 @@
 {
   "git_url": "https://github.com/OCR-D/ocrd_kraken",
-  "tools": [
-    {
+  "tools": {
+    "ocrd-kraken-binarize": {
       "executable": "ocrd-kraken-binarize",
-      "tags": ["Image preprocessing"],
-      "step": "preprocessing/optimization/binarization",
+      "category": "Image preprocessing",
+      "steps": [
+        "preprocessing/optimization/binarization"
+      ],
       "description": "Binarize images with kraken",
       "parameters": {
         "level-of-operation": {
           "type": "string",
           "default": "page",
-          "enum": [
-            "page",
-            "region",
-            "line"
-          ]
+          "enum": ["page", "region", "line"]
         }
       }
     },
-    {
+    "ocrd-kraken-segment": {
       "executable": "ocrd-kraken-segment",
-      "tags": ["Layout analysis"],
-      "step": "layout/segmentation/region",
-      "description": "Region detection with kraken",
-      "parameters": {}
+      "category": "Layout analysis",
+      "steps": [
+        "layout/segmentation/region"
+      ],
+      "description": "Block segmentation with kraken",
+      "parameters": {
+        "text_direction": {
+          "type": "string",
+          "description": "Sets principal text direction",
+          "enum": ["horizontal-lr", "horizontal-rl", "vertical-lr", "vertical-rl"],
+          "default": "horizontal-lr"
+        },
+        "script_detect": {
+          "type": "boolean",
+          "description": "Enable script detection on segmenter output",
+          "default": false
+        },
+        "scale": {"type": "number", "format": "float"},
+        "black_colseps": {"type": "boolean", "default": false},
+        "white_colseps": {"type": "boolean", "default": false}
+      }
     }
-  ]
+
+  }
 }
