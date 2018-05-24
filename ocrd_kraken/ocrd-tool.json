@@ -12,7 +12,7 @@
         "level-of-operation": {
           "type": "string",
           "default": "page",
-          "enum": ["page", "region", "line"]
+          "enum": ["page", "block", "line"]
         }
       }
     },
@@ -39,6 +39,22 @@
         "scale": {"type": "number", "format": "float", "default": null},
         "black_colseps": {"type": "boolean", "default": false},
         "white_colseps": {"type": "boolean", "default": false}
+      }
+    },
+    "ocrd-kraken-ocr": {
+      "executable": "ocrd-kraken-ocr",
+      "category": "Text recognition",
+      "steps": [
+        "recognition"
+      ],
+      "description": "OCR with kraken",
+      "parameters": {
+        "lines-json": {
+          "type": "string",
+          "format": "url",
+          "required": "true",
+          "description": "URL to line segmentation in JSON"
+        }
       }
     }
 
