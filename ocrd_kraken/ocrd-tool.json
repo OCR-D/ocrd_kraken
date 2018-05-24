@@ -35,7 +35,8 @@
           "description": "Enable script detection on segmenter output",
           "default": false
         },
-        "scale": {"type": "number", "format": "float"},
+        "maxcolseps": {"type": "number", "format": "integer", "default": 2},
+        "scale": {"type": "number", "format": "float", "default": null},
         "black_colseps": {"type": "boolean", "default": false},
         "white_colseps": {"type": "boolean", "default": false}
       }

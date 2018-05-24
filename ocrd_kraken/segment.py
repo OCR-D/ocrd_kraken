@@ -12,7 +12,7 @@ log = getLogger('processor.KrakenSegment')
 class KrakenSegment(Processor):
 
     def __init__(self, *args, **kwargs):
-        kwargs['ocrd_tool'] = OCRD_TOOL['tools'][1]
+        kwargs['ocrd_tool'] = OCRD_TOOL['tools']['ocrd-kraken-segment']
         super(KrakenSegment, self).__init__(*args, **kwargs)
 
     def process(self):

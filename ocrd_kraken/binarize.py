@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import io
 import kraken.binarization
-from ocrd import Processor, MIMETYPE_PAGE # pylint: disable=no-name-in-module
+from ocrd import Processor
 from ocrd.utils import getLogger, polygon_from_points, mets_file_id
 import ocrd.model.ocrd_page as ocrd_page
 
@@ -12,7 +12,7 @@ log = getLogger('processor.KrakenBinarize')
 class KrakenBinarize(Processor):
 
     def __init__(self, *args, **kwargs):
-        kwargs['ocrd_tool'] = OCRD_TOOL['tools'][1]
+        kwargs['ocrd_tool'] = OCRD_TOOL['tools']['ocrd-kraken-binarize']
         super(KrakenBinarize, self).__init__(*args, **kwargs)
 
     def process(self):
