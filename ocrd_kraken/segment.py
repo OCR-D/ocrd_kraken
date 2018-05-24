@@ -30,16 +30,15 @@ class KrakenSegment(Processor):
 
             im = self.workspace.resolve_image_as_pil(image_url)
 
-            # TODO parameters
-            text_direction = 'horizontal-lr'
-            script_detect = False
-            scale = None
-            maxcolseps = 2
-            black_colseps = False
-
             log.info('Segmenting')
-            res = pageseg.segment(im, text_direction, scale, maxcolseps, black_colseps)
-            if script_detect:
+            res = pageseg.segment(
+                im,
+                self.parameter['text_direction'],
+                self.parameter['scale'],
+                self.parameter['maxcolseps'],
+                self.parameter['black_colseps']
+            )
+            if self.parameter['script_detect']:
                 res = pageseg.detect_scripts(im, res)
 
             dummyRegion = TextRegionType()
