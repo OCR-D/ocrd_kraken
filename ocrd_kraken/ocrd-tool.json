@@ -3,7 +3,9 @@
   "tools": {
     "ocrd-kraken-binarize": {
       "executable": "ocrd-kraken-binarize",
-      "category": "Image preprocessing",
+      "categories": [
+        "Image preprocessing"
+      ],
       "steps": [
         "preprocessing/optimization/binarization"
       ],
@@ -18,7 +20,9 @@
     },
     "ocrd-kraken-segment": {
       "executable": "ocrd-kraken-segment",
-      "category": "Layout analysis",
+      "categories": [
+        "Layout analysis"
+      ],
       "steps": [
         "layout/segmentation/region"
       ],

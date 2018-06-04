@@ -19,15 +19,15 @@ class TestKrakenBinarize(TestCase):
             shutil.rmtree(WORKSPACE_DIR)
         os.makedirs(WORKSPACE_DIR)
 
-    def test_param_json(self):
-        resolver = Resolver(cache_enabled=True)
-        workspace = resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/mets_one_file.xml'), directory=WORKSPACE_DIR)
-        run_processor(
-            KrakenBinarize,
-            resolver=resolver,
-            workspace=workspace,
-            parameter=PARAM_JSON
-        )
+    #  def test_param_json(self):
+    #      resolver = Resolver(cache_enabled=True)
+    #      workspace = resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/mets_one_file.xml'), directory=WORKSPACE_DIR)
+    #      run_processor(
+    #          KrakenBinarize,
+    #          resolver=resolver,
+    #          workspace=workspace,
+    #          parameter=PARAM_JSON
+    #      )
 
     def test_binarize_regions(self):
         resolver = Resolver(cache_enabled=True)
