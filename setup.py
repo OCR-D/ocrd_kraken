@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Installs one binary:
+Installs two binaries:
 
     - ocrd-kraken-binarize
+    - ocrd-kraken-segment
 """
 import codecs
 
@@ -22,10 +23,13 @@ setup(
     license='Apache License 2.0',
     packages=find_packages(exclude=('tests', 'docs')),
     install_requires=[
-        'ocrd >= 0.2.2',
+        'ocrd >= 0.2.3',
         'kraken',
         'click',
     ],
+    package_data={
+        '': ['*.json', '*.yml', '*.yaml'],
+    },
     entry_points={
         'console_scripts': [
             'ocrd-kraken-binarize=ocrd_kraken.cli:ocrd_kraken_binarize',
