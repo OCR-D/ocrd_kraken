@@ -47,9 +47,9 @@
     },
     "ocrd-kraken-ocr": {
       "executable": "ocrd-kraken-ocr",
-      "category": "Text recognition",
+      "categories": ["Text recognition and optimization"],
       "steps": [
-        "recognition"
+        "recognition/text-recognition"
       ],
       "description": "OCR with kraken",
       "parameters": {
