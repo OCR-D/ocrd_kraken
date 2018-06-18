@@ -23,7 +23,7 @@ setup(
     license='Apache License 2.0',
     packages=find_packages(exclude=('tests', 'docs')),
     install_requires=[
-        'ocrd >= 0.2.4',
+        'ocrd >= 0.3.0',
         'kraken',
         'click',
     ],
