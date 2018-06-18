@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import kraken.pageseg as pageseg
 from ocrd import Processor, MIMETYPE_PAGE
-from ocrd.utils import getLogger, mets_file_id, points_from_x0y0x1y1
+from ocrd.utils import getLogger, concat_padded, points_from_x0y0x1y1
 import ocrd.model.ocrd_page as ocrd_page
 from ocrd.model.ocrd_page import TextRegionType, TextLineType, CoordsType, to_xml
 
@@ -47,11 +47,11 @@ class KrakenSegment(Processor):
             #  print(res)
             for lineno, box in enumerate(res['boxes']):
                 textline = TextLineType(
-                    id=mets_file_id("line", lineno),
+                    id=concat_padded("line", lineno),
                     Coords=CoordsType(points=points_from_x0y0x1y1(box))
                 )
                 dummyRegion.add_TextLine(textline)
-            ID = mets_file_id(self.output_file_grp, n)
+            ID = concat_padded(self.output_file_grp, n)
             self.add_output_file(
                 ID=ID,
                 file_grp=self.output_file_grp,

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import io
 import kraken.binarization
 from ocrd import Processor
-from ocrd.utils import getLogger, polygon_from_points, mets_file_id
+from ocrd.utils import getLogger, polygon_from_points, concat_padded
 import ocrd.model.ocrd_page as ocrd_page
 
 from ocrd_kraken.config import OCRD_TOOL
@@ -34,7 +34,7 @@ class KrakenOcr(Processor):
                     bin_image = kraken.binarization.nlbin(image)
                     bin_image_bytes = io.BytesIO()
                     bin_image.save(bin_image_bytes, format='PNG')
-                    ID = mets_file_id(self.output_file_grp, n)
+                    ID = concat_padded(self.output_file_grp, n)
                     self.add_output_file(
                         ID=ID,
                         file_grp=self.output_file_grp,
