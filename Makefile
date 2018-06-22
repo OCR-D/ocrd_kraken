@@ -37,6 +37,8 @@ deps-pip:
 deps-pip-test:
 	$(PIP) install -r requirements_test.txt
 
+deps: deps-pip
+
 # Install
 install:
 	$(PIP) install .
