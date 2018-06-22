@@ -1,3 +1,3 @@
-ocrd >= 0.3.1
+ocrd >= 0.4.0
 click
 git+https://github.com/mittagessen/kraken#egg=kraken
