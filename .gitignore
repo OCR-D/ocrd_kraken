@@ -106,3 +106,5 @@ ENV/
 .pytest_cache
 test/assets
 repo
+.pynative
+_*.png
