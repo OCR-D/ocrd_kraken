@@ -19,7 +19,7 @@ class TestKrakenSegment(TestCase):
         os.makedirs(WORKSPACE_DIR)
 
     def test_run1(self):
-        resolver = Resolver(cache_enabled=True)
+        resolver = Resolver()
         workspace = resolver.workspace_from_url(assets.url_of('kant_aufklaerung_1784-binarized/mets.xml'), directory=WORKSPACE_DIR)
         proc = KrakenSegment(
             workspace,

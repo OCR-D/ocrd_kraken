@@ -37,7 +37,12 @@ class KrakenBinarize(Processor):
                 bin_image_bytes = io.BytesIO()
                 bin_image.save(bin_image_bytes, format='PNG')
                 ID = concat_padded(self.output_file_grp, n)
-                self.add_output_file(ID=ID, file_grp=self.output_file_grp, basename="%s.bin.png" % ID, mimetype='image/png', content=bin_image_bytes.getvalue())
+                self.workspace.add_file(
+                    self.output_file_grp,
+                    ID=ID,
+                    basename="%s.bin.png" % ID,
+                    mimetype='image/png',
+                    content=bin_image_bytes.getvalue())
             else:
                 for region in pcgts.get_Page().get_TextRegion():
                     if self.parameter['level-of-operation'] == 'block':
@@ -53,4 +58,9 @@ class KrakenBinarize(Processor):
                             bin_image_bytes = io.BytesIO()
                             bin_image.save(bin_image_bytes, format='PNG')
                             ID = concat_padded(self.output_file_grp, n, region.id, line_no)
-                            self.add_output_file(ID=ID, file_grp=self.output_file_grp, basename="%s.bin.png" % ID, mimetype='image/png', content=bin_image_bytes.getvalue())
+                            self.workspace.add_file(
+                                self.output_file_grp,
+                                ID=ID,
+                                basename="%s.bin.png" % ID,
+                                mimetype='image/png',
+                                content=bin_image_bytes.getvalue())
