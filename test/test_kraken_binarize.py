@@ -6,7 +6,6 @@ import shutil
 from test.base import TestCase, assets, main
 
 from ocrd.resolver import Resolver
-from ocrd import run_processor
 from ocrd_kraken.binarize import KrakenBinarize
 PARAM_JSON = assets.url_of('param-binarize.json')
 
@@ -30,7 +29,7 @@ class TestKrakenBinarize(TestCase):
     #      )
 
     def test_binarize_regions(self):
-        resolver = Resolver(cache_enabled=True)
+        resolver = Resolver()
         workspace = resolver.workspace_from_url(assets.url_of('kant_aufklaerung_1784/mets.xml'), directory=WORKSPACE_DIR)
         proc = KrakenBinarize(
             workspace,
@@ -42,7 +41,7 @@ class TestKrakenBinarize(TestCase):
         workspace.save_mets()
 
     def test_binarize_lines(self):
-        resolver = Resolver(cache_enabled=True)
+        resolver = Resolver()
         workspace = resolver.workspace_from_url(assets.url_of('kant_aufklaerung_1784/mets.xml'), directory=WORKSPACE_DIR)
         proc = KrakenBinarize(
             workspace,

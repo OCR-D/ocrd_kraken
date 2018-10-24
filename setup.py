@@ -23,9 +23,9 @@ setup(
     license='Apache License 2.0',
     packages=find_packages(exclude=('tests', 'docs')),
     install_requires=[
-        'ocrd >= 0.4.4',
-        'kraken',
-        'click',
+        'ocrd >= 0.8.8',
+        'kraken >= 0.9.16',
+        'click >= 7',
     ],
     package_data={
         '': ['*.json', '*.yml', '*.yaml'],
