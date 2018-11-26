@@ -20,7 +20,7 @@ class TestKrakenSegment(TestCase):
 
     def test_run1(self):
         resolver = Resolver()
-        workspace = resolver.workspace_from_url(assets.url_of('kant_aufklaerung_1784-binarized/mets.xml'), directory=WORKSPACE_DIR)
+        workspace = resolver.workspace_from_url(assets.url_of('kant_aufklaerung_1784-binarized/data/mets.xml'), dst_dir=WORKSPACE_DIR)
         proc = KrakenSegment(
             workspace,
             input_file_grp="OCR-D-IMG-BIN",

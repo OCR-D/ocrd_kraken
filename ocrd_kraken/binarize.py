@@ -14,8 +14,6 @@ class KrakenBinarize(Processor):
     def __init__(self, *args, **kwargs):
         kwargs['ocrd_tool'] = OCRD_TOOL['tools']['ocrd-kraken-binarize']
         kwargs['version'] = OCRD_TOOL['version']
-        kwargs['input_file_grp'] = 'OCR-D-IMG'
-        kwargs['output_file_grp'] = 'OCR-D-IMG-BIN-KRAKEN'
         super(KrakenBinarize, self).__init__(*args, **kwargs)
 
     def process(self):

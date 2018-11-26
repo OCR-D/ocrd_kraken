@@ -20,8 +20,14 @@ class TestKrakenOcr(TestCase):
 
     def test_param_json(self):
         resolver = Resolver()
-        workspace = resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/mets_one_file.xml'), directory=WORKSPACE_DIR)
-        run_processor(KrakenBinarize, resolver=resolver, workspace=workspace, input_file_grp="INPUT", output_file_grp="OCR-D-IMG-BIN-KRAKEN")
+        workspace = resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'), dst_dir=WORKSPACE_DIR)
+        run_processor(
+            KrakenBinarize,
+            resolver=resolver,
+            workspace=workspace,
+            input_file_grp="INPUT",
+            output_file_grp="OCR-D-IMG-BIN-KRAKEN"
+        )
         workspace.save_mets()
 
 if __name__ == "__main__":
