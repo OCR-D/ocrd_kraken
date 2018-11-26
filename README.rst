@@ -8,4 +8,8 @@ ocrd_kraken
     :target: https://hub.docker.com/r/ocrd/kraken/tags/
     :alt: Docker Automated build
 
+.. image:: https://circleci.com/gh/OCR-D/ocrd_kraken.svg?style=svg
+    :target: https://circleci.com/gh/OCR-D/ocrd_kraken
+
+
     Wrapper for the kraken OCR engine

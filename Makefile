@@ -15,13 +15,13 @@ help:
 	@echo ""
 	@echo "  Targets"
 	@echo ""
-	@echo "    deps-pip       Install python deps via pip"
-	@echo "    deps-pip-test  Install testing deps via pip"
-	@echo "    install        Install"
-	@echo "    docker         Build docker image"
-	@echo "    test           Run test"
-	@echo "    repo/assets    Clone OCR-D/assets to ./repo/assets"
-	@echo "    assets         Setup test assets"
+	@echo "    deps         Install python deps via pip"
+	@echo "    deps-test    Install testing deps via pip"
+	@echo "    install      Install"
+	@echo "    docker       Build docker image"
+	@echo "    test         Run test"
+	@echo "    repo/assets  Clone OCR-D/assets to ./repo/assets"
+	@echo "    assets       Setup test assets"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
@@ -30,18 +30,16 @@ help:
 # END-EVAL
 
 # Install python deps via pip
-deps-pip:
+deps:
 	$(PIP) install -r requirements.txt
 
 # Install testing deps via pip
-deps-pip-test:
+deps-test:
 	$(PIP) install -r requirements_test.txt
-
-deps: deps-pip
 
 # Install
 install:
-	$(PIP) install .
+	$(PIP) install -e .
 
 # Build docker image
 docker:
