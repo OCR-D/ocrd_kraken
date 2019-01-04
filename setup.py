@@ -14,7 +14,7 @@ with codecs.open('README.rst', encoding='utf-8') as f:
 
 setup(
     name='ocrd_kraken',
-    version='0.0.1',
+    version='0.0.2',
     description='kraken bindings',
     long_description=README,
     author='Konstantin Baierer, Kay-Michael Würzner',
