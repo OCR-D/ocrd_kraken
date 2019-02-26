@@ -22,7 +22,7 @@ setup(
     packages=find_packages(exclude=('tests', 'docs')),
     install_requires=[
         'ocrd >= 1.0.0a4',
-        'kraken >= 0.9.16',
+        'kraken == 0.9.16',
         'click >= 7',
     ],
     package_data={
