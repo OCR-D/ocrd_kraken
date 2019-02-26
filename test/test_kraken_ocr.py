@@ -22,11 +22,11 @@ class TestKrakenOcr(TestCase):
         resolver = Resolver()
         workspace = resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'), dst_dir=WORKSPACE_DIR)
         run_processor(
-            KrakenBinarize,
+            KrakenOcr,
             resolver=resolver,
             workspace=workspace,
             input_file_grp="INPUT",
-            output_file_grp="OCR-D-IMG-BIN-KRAKEN"
+            output_file_grp="OCR-D-OCR-KRAKEN"
         )
         workspace.save_mets()
 

@@ -2,8 +2,8 @@ from __future__ import absolute_import
 import io
 import kraken.binarization
 from ocrd import Processor
-from ocrd.utils import getLogger, polygon_from_points, concat_padded
-import ocrd.model.ocrd_page as ocrd_page
+from ocrd_utils import getLogger, polygon_from_points, concat_padded
+from ocrd_modelfactory import page_from_file
 
 from ocrd_kraken.config import OCRD_TOOL
 
@@ -22,10 +22,10 @@ class KrakenBinarize(Processor):
         """
         log.debug('Level of operation: "%s"', self.parameter['level-of-operation'])
         log.debug('Input file group %s', self.input_file_grp)
-        log.debug('Input files %s', self.input_files)
+        log.debug('Input files %s', [str(f) for f in self.input_files])
         for (n, input_file) in enumerate(self.input_files):
             log.info("INPUT FILE %i / %s", n, input_file)
-            pcgts = ocrd_page.from_file(self.workspace.download_file(input_file))
+            pcgts = page_from_file(self.workspace.download_file(input_file))
             image_url = pcgts.get_Page().imageFilename
             log.info("pcgts %s", pcgts)
             if self.parameter['level-of-operation'] == 'page':
@@ -38,8 +38,8 @@ class KrakenBinarize(Processor):
                 self.workspace.add_file(
                     self.output_file_grp,
                     ID=ID,
-                    basename="%s.bin.png" % ID,
                     mimetype='image/png',
+                    local_filename="%s/%s" % (self.output_file_grp, ID),
                     content=bin_image_bytes.getvalue())
             else:
                 for region in pcgts.get_Page().get_TextRegion():
@@ -59,6 +59,6 @@ class KrakenBinarize(Processor):
                             self.workspace.add_file(
                                 self.output_file_grp,
                                 ID=ID,
-                                basename="%s.bin.png" % ID,
+                                local_filename="%s/%s" % (self.output_file_grp, ID),
                                 mimetype='image/png',
                                 content=bin_image_bytes.getvalue())
