@@ -3,7 +3,7 @@
 import os
 import shutil
 
-from test.base import TestCase, assets, main
+from tests.base import TestCase, assets, main
 
 from ocrd.resolver import Resolver
 from ocrd_kraken.segment import KrakenSegment

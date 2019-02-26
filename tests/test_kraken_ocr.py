@@ -3,7 +3,7 @@
 import os
 import shutil
 
-from test.base import TestCase, assets, main
+from tests.base import TestCase, assets, main
 
 from ocrd.resolver import Resolver
 from ocrd import run_processor
