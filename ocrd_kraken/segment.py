@@ -1,11 +1,13 @@
 from __future__ import absolute_import
-from kraken.pageseg import segment, detect_scripts
-from ocrd import Processor, MIMETYPE_PAGE
-from ocrd.utils import getLogger, concat_padded, points_from_x0y0x1y1
-from ocrd.model.ocrd_page import from_file
-from ocrd.model.ocrd_page import TextRegionType, TextLineType, CoordsType, to_xml
+
+from ocrd import Processor
+from ocrd_utils import getLogger, concat_padded, points_from_x0y0x1y1, MIMETYPE_PAGE
+from ocrd_models.ocrd_page import TextRegionType, TextLineType, CoordsType, to_xml
+from ocrd_modelfactory import page_from_file
 
 from ocrd_kraken.config import OCRD_TOOL
+
+from kraken.pageseg import segment, detect_scripts
 
 log = getLogger('processor.KrakenSegment')
 
@@ -23,7 +25,7 @@ class KrakenSegment(Processor):
             log.info("INPUT FILE %i / %s", n, input_file)
             downloaded_file = self.workspace.download_file(input_file)
             log.info("downloaded_file %s", downloaded_file)
-            pcgts = from_file(downloaded_file)
+            pcgts = page_from_file(downloaded_file)
             # TODO binarized variant from get_AlternativeImage()
             image_url = pcgts.get_Page().imageFilename
             log.info("pcgts %s", pcgts)
@@ -55,6 +57,6 @@ class KrakenSegment(Processor):
             self.workspace.add_file(
                 self.output_file_grp,
                 ID=ID,
-                basename="%s.xml" % ID,
                 mimetype=MIMETYPE_PAGE,
+                local_filename="%s/%s.xml" % (self.output_file_grp, ID),
                 content=to_xml(pcgts).encode('utf-8'))

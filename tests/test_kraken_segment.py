@@ -3,13 +3,13 @@
 import os
 import shutil
 
-from test.base import TestCase, assets, main
+from tests.base import TestCase, assets, main
 
 from ocrd.resolver import Resolver
 from ocrd_kraken.segment import KrakenSegment
 PARAM_JSON = assets.url_of('param-segment.json')
 
-WORKSPACE_DIR = '/tmp/ocrd-kraken-segment-test'
+WORKSPACE_DIR = '/tmp/ocrd-ocropy-segment-test'
 
 class TestKrakenSegment(TestCase):
 

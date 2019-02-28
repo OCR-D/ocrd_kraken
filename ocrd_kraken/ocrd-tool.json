@@ -4,6 +4,8 @@
   "tools": {
     "ocrd-kraken-binarize": {
       "executable": "ocrd-kraken-binarize",
+      "input_file_grp": "OCR-D-IMG",
+      "output_file_grp": "OCR-D-IMG-BIN",
       "categories": [
         "Image preprocessing"
       ],

@@ -9,22 +9,20 @@ import codecs
 
 from setuptools import setup, find_packages
 
-with codecs.open('README.rst', encoding='utf-8') as f:
-    README = f.read()
-
 setup(
     name='ocrd_kraken',
     version='0.0.2',
     description='kraken bindings',
-    long_description=README,
+    long_description=codecs.open('README.md', encoding='utf-8').read(),
+    long_description_content_type='text/markdown',
     author='Konstantin Baierer, Kay-Michael Würzner',
     author_email='unixprog@gmail.com, wuerzner@gmail.com',
     url='https://github.com/OCR-D/ocrd_kraken',
     license='Apache License 2.0',
     packages=find_packages(exclude=('tests', 'docs')),
     install_requires=[
-        'ocrd >= 0.13.1',
-        'kraken >= 0.9.16',
+        'ocrd >= 1.0.0a4',
+        'kraken == 0.9.16',
         'click >= 7',
     ],
     package_data={

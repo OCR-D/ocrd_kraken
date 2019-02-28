@@ -104,7 +104,7 @@ ENV/
 # vim
 *.swp
 .pytest_cache
-test/assets
+tests/assets
 repo
 .pynative
 _*.png

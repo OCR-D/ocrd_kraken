@@ -48,7 +48,7 @@ docker:
 .PHONY: test
 # Run test
 test:
-	$(PYTHON) -m pytest test
+	$(PYTHON) -m pytest tests
 
 #
 # Assets
@@ -62,5 +62,5 @@ repo/assets:
 
 # Setup test assets
 assets: repo/assets
-	mkdir -p test/assets
-	cp -r -t test/assets repo/assets/data/*
+	mkdir -p tests/assets
+	cp -r -t tests/assets repo/assets/data/*

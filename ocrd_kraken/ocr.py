@@ -2,8 +2,8 @@ from __future__ import absolute_import
 import io
 import kraken.binarization
 from ocrd import Processor
-from ocrd.utils import getLogger, polygon_from_points, concat_padded
-from ocrd.model.ocrd_page import from_file
+from ocrd_utils import getLogger, polygon_from_points, concat_padded
+from ocrd_modelfactory import page_from_file
 
 from ocrd_kraken.config import OCRD_TOOL
 
@@ -21,7 +21,7 @@ class KrakenOcr(Processor):
         """
         for (n, input_file) in enumerate(self.input_files):
             log.info("INPUT FILE %i / %s", n, input_file)
-            pcgts = from_file(self.workspace.download_file(input_file))
+            pcgts = page_from_file(self.workspace.download_file(input_file))
             image_url = pcgts.get_Page().imageFilename
             log.info("pcgts %s", pcgts)
             for region in pcgts.get_Page().get_TextRegion():
