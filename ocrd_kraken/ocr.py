@@ -37,6 +37,7 @@ class KrakenOcr(Processor):
                     ID = concat_padded(self.output_file_grp, n)
                     self.workspace.add_file(
                         self.output_file_grp,
+                        pageId=input_file.pageId,
                         ID=ID,
                         basename="%s.bin.png" % ID,
                         mimetype='image/png',

@@ -11,7 +11,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='ocrd_kraken',
-    version='0.1.0',
+    version='0.1.1',
     description='kraken bindings',
     long_description=codecs.open('README.md', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
