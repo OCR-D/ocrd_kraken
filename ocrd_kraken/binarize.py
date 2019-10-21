@@ -37,6 +37,7 @@ class KrakenBinarize(Processor):
                 ID = concat_padded(self.output_file_grp, n)
                 self.workspace.add_file(
                     self.output_file_grp,
+                    pageId=input_file.pageId,
                     ID=ID,
                     mimetype='image/png',
                     local_filename="%s/%s" % (self.output_file_grp, ID),
@@ -58,6 +59,7 @@ class KrakenBinarize(Processor):
                             ID = concat_padded(self.output_file_grp, n, region.id, line_no)
                             self.workspace.add_file(
                                 self.output_file_grp,
+                                pageId=input_file.pageId,
                                 ID=ID,
                                 local_filename="%s/%s" % (self.output_file_grp, ID),
                                 mimetype='image/png',

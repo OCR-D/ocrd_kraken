@@ -56,6 +56,7 @@ class KrakenSegment(Processor):
             ID = concat_padded(self.output_file_grp, n)
             self.workspace.add_file(
                 self.output_file_grp,
+                pageId=input_file.pageId,
                 ID=ID,
                 mimetype=MIMETYPE_PAGE,
                 local_filename="%s/%s.xml" % (self.output_file_grp, ID),
