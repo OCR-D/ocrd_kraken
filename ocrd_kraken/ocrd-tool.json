@@ -43,7 +43,7 @@
           "default": false
         },
         "maxcolseps": {"type": "number", "format": "integer", "default": 2},
-        "scale": {"type": "number", "format": "float", "default": null},
+        "scale": {"type": "number", "format": "float", "default": 0},
         "black_colseps": {"type": "boolean", "default": false},
         "white_colseps": {"type": "boolean", "default": false}
       }

@@ -25,6 +25,7 @@ class TestKrakenOcr(TestCase):
             KrakenOcr,
             resolver=resolver,
             workspace=workspace,
+            parameter={'lines-json': 'bar'},
             input_file_grp="INPUT",
             output_file_grp="OCR-D-OCR-KRAKEN"
         )
