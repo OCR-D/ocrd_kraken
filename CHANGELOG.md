@@ -5,6 +5,23 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.1.1] - 2019-10-21
+
+Fixed:
+
+  * Pass `pageId` to workspace.add_file, #28
+  * Updated Dockerfile
+
+## [0.1.0] - 2018-07-03
+
+Fixed:
+
+  * Adapted to 1.0.0 core API
+
+Added:
+
+  * input/output file groups to ocrd-tool.json
+
 ## [0.0.2] - 2018-07-03
 
 Fixed:
@@ -20,5 +37,7 @@ Changed:
 Initial release
 
 <!-- link-labels -->
+[0.1.1]: v0.1.1...v0.1.0
+[0.1.0]: v0.1.0...v0.0.2
 [0.0.2]: v0.0.2...v0.0.1
 [0.0.1]: ../../compare/HEAD...v0.0.1
