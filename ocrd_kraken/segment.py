@@ -9,8 +9,6 @@ from ocrd_kraken.config import OCRD_TOOL
 
 from kraken.pageseg import segment, detect_scripts
 
-log = getLogger('processor.KrakenSegment')
-
 class KrakenSegment(Processor):
 
     def __init__(self, *args, **kwargs):
@@ -21,6 +19,7 @@ class KrakenSegment(Processor):
         """
         Segment with kraken
         """
+        log = getLogger('processor.KrakenSegment')
         for (n, input_file) in enumerate(self.input_files):
             log.info("INPUT FILE %i / %s", n, input_file)
             downloaded_file = self.workspace.download_file(input_file)

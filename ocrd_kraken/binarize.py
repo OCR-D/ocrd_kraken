@@ -7,7 +7,6 @@ from ocrd_modelfactory import page_from_file
 
 from ocrd_kraken.config import OCRD_TOOL
 
-log = getLogger('processor.KrakenBinarize')
 
 class KrakenBinarize(Processor):
 
@@ -20,6 +19,7 @@ class KrakenBinarize(Processor):
         """
         Performs the binarization.
         """
+        log = getLogger('processor.KrakenBinarize')
         log.debug('Level of operation: "%s"', self.parameter['level-of-operation'])
         log.debug('Input file group %s', self.input_file_grp)
         log.debug('Input files %s', [str(f) for f in self.input_files])
