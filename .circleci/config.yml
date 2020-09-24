@@ -4,18 +4,34 @@ jobs:
 
   build-python35:
     docker:
-      - image: python:3.5.3
+      - image: python:3.5.10-buster
     steps:
       - checkout
-      - run: make deps deps-test install assets
+      - run: make deps-ubuntu deps-test deps install assets
       - run: make test
 
   build-python36:
     docker:
-      - image: python:3.6.0
+      - image: python:3.6.12-buster
     steps:
       - checkout
-      - run: make deps deps-test install assets
+      - run: make deps-ubuntu deps-test deps install assets
+      - run: make test
+
+  build-python37:
+    docker:
+      - image: python:3.7.9-buster
+    steps:
+      - checkout
+      - run: make deps-ubuntu deps-test deps install assets
+      - run: make test
+
+  build-python38:
+    docker:
+      - image: python:3.8.5-buster
+    steps:
+      - checkout
+      - run: make deps-ubuntu deps-test deps install assets
       - run: make test
 
 workflows:
@@ -24,3 +40,5 @@ workflows:
     jobs:
       - build-python35
       - build-python36
+      - build-python37
+      - build-python38
