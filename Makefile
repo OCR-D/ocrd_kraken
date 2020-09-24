@@ -31,7 +31,12 @@ help:
 
 # Install python deps via pip
 deps:
+	$(PIP) install -U pip
 	$(PIP) install -r requirements.txt
+
+deps-ubuntu:
+	apt-get update
+	apt-get -y install scons libprotobuf-dev protobuf-compiler libpng-dev libeigen3-dev swig
 
 # Install testing deps via pip
 deps-test:

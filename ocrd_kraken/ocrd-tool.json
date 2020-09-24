@@ -45,7 +45,12 @@
         "maxcolseps": {"type": "number", "format": "integer", "default": 2},
         "scale": {"type": "number", "format": "float", "default": 0},
         "black_colseps": {"type": "boolean", "default": false},
-        "white_colseps": {"type": "boolean", "default": false}
+        "white_colseps": {"type": "boolean", "default": false},
+        "level-of-operation": {
+          "type": "string",
+          "default": "page",
+          "enum": ["page", "block", "line"]
+        }
       }
     },
     "ocrd-kraken-ocr": {
