@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.1.2] - 2019-09-24
+
+Fixed:
+
+  * Logging according to https://github.com/OCR-D/core/pull/599
+
 ## [0.1.1] - 2019-10-21
 
 Fixed:
@@ -37,6 +43,7 @@ Changed:
 Initial release
 
 <!-- link-labels -->
+[0.1.2]: v0.1.2...v0.1.1
 [0.1.1]: v0.1.1...v0.1.0
 [0.1.0]: v0.1.0...v0.0.2
 [0.0.2]: v0.0.2...v0.0.1
