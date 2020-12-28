@@ -1,3 +1,2 @@
-ocrd >= 0.13.1
-kraken >= 0.9.16
-click >= 7
+ocrd >= 2.22.0b1
+kraken >= 2.0.8
