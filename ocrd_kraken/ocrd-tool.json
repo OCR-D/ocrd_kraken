@@ -32,27 +32,21 @@
       ],
       "description": "Block segmentation with kraken",
       "parameters": {
-        "text_direction": {
-          "type": "string",
-          "description": "Sets principal text direction",
-          "enum": ["horizontal-lr", "horizontal-rl", "vertical-lr", "vertical-rl"],
-          "default": "horizontal-lr"
-        },
-        "script_detect": {
-          "type": "boolean",
-          "description": "Enable script detection on segmenter output",
-          "default": false
-        },
+        "text_direction": {"type": "string", "description": "Sets principal text direction", "enum": ["horizontal-lr", "horizontal-rl", "vertical-lr", "vertical-rl"], "default": "horizontal-lr"},
+        "script_detect": {"type": "boolean", "description": "Enable script detection on segmenter output", "default": false},
         "maxcolseps": {"description": "maximum number of column separators", "type": "number", "format": "integer", "default": 2},
         "scale": {"description": "scale factor", "type": "number", "format": "float", "default": 0},
-        "black_colseps": {"description": "Are column separators black?", "type": "boolean", "default": false},
-        "white_colseps": {"description": "Are column separators white?", "type": "boolean", "default": false},
-        "level-of-operation": {
-          "description": "level-of-operation", 
+        "black_colseps": {"description": "Whether column separators are assumed to be vertical black lines or not", "type": "boolean", "default": false},
+        "remove_hlines": {"description": "Remove horizontal colseps before segmentation", "type": "boolean", "default": true},
+        "blla_model": {
+          "description": "Model used for baseline detection. Use kraken-provided model if not give. Ignored if use_legacy.",
           "type": "string",
-          "default": "page",
-          "enum": ["page", "block", "line"]
-        }
+          "cacheable": true,
+          "default": "blla.mlmodel"
+        },
+        "device": {"description": "GPU ID or 'cpu' to run on CPU only", "type": "string", "default": "cpu"},
+        "use_legacy": {"description": "Use legacy box segmenter as opposed to neural net baseline segmenter", "type": "boolean", "default": false},
+        "level-of-operation": {"description": "level-of-operation", "type": "string", "default": "page", "enum": ["page", "block", "line"]}
       }
     },
     "ocrd-kraken-ocr": {
