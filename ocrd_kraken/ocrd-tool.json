@@ -15,6 +15,7 @@
       "description": "Binarize images with kraken",
       "parameters": {
         "level-of-operation": {
+          "description": "level-of-operation",
           "type": "string",
           "default": "page",
           "enum": ["page", "block", "line"]
@@ -42,11 +43,12 @@
           "description": "Enable script detection on segmenter output",
           "default": false
         },
-        "maxcolseps": {"type": "number", "format": "integer", "default": 2},
-        "scale": {"type": "number", "format": "float", "default": 0},
-        "black_colseps": {"type": "boolean", "default": false},
-        "white_colseps": {"type": "boolean", "default": false},
+        "maxcolseps": {"description": "maximum number of column separators", "type": "number", "format": "integer", "default": 2},
+        "scale": {"description": "scale factor", "type": "number", "format": "float", "default": 0},
+        "black_colseps": {"description": "Are column separators black?", "type": "boolean", "default": false},
+        "white_colseps": {"description": "Are column separators white?", "type": "boolean", "default": false},
         "level-of-operation": {
+          "description": "level-of-operation", 
           "type": "string",
           "default": "page",
           "enum": ["page", "block", "line"]

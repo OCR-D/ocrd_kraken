@@ -7,8 +7,6 @@ from ocrd_modelfactory import page_from_file
 
 from ocrd_kraken.config import OCRD_TOOL
 
-log = getLogger('processor.KrakenOcr')
-
 class KrakenOcr(Processor):
 
     def __init__(self, *args, **kwargs):
@@ -19,6 +17,7 @@ class KrakenOcr(Processor):
         """
         Performs the binarization.
         """
+        log = getLogger('processor.KrakenOcr')
         for (n, input_file) in enumerate(self.input_files):
             log.info("INPUT FILE %i / %s", n, input_file)
             pcgts = page_from_file(self.workspace.download_file(input_file))
