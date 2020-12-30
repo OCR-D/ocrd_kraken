@@ -47,21 +47,14 @@
         "use_legacy": {"description": "Use legacy box segmenter as opposed to neural net baseline segmenter", "type": "boolean", "default": false}
       }
     },
-    "ocrd-kraken-ocr": {
-      "executable": "ocrd-kraken-ocr",
+    "ocrd-kraken-recognize": {
+      "executable": "ocrd-kraken-recognize",
       "categories": ["Text recognition and optimization"],
       "steps": [
         "recognition/text-recognition"
       ],
       "description": "OCR with kraken",
-      "parameters": {
-        "lines-json": {
-          "type": "string",
-          "format": "url",
-          "required": "true",
-          "description": "URL to line segmentation in JSON"
-        }
-      }
+      "parameters": {}
     }
 
   }

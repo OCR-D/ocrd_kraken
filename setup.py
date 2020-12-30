@@ -32,8 +32,9 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'ocrd-kraken-binarize=ocrd_kraken.cli:ocrd_kraken_binarize',
-            'ocrd-kraken-segment=ocrd_kraken.cli:ocrd_kraken_segment',
+            'ocrd-kraken-binarize=ocrd_kraken.cli.binarize:cli',
+            'ocrd-kraken-segment=ocrd_kraken.cli.segment:cli',
+            'ocrd-kraken-recognize=ocrd_kraken.cli.recognize:cli',
         ]
     },
 )
