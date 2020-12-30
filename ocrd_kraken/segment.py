@@ -14,9 +14,7 @@ from ocrd_models.ocrd_page import TextRegionType, TextLineType, CoordsType, Base
 from ocrd_modelfactory import page_from_file
 
 import shapely.geometry as geom
-from kraken.lib.vgsl import TorchVGSLModel
 from kraken.pageseg import segment as legacy_segment
-from kraken.blla import segment as blla_segment
 
 from .config import OCRD_TOOL
 
@@ -44,6 +42,8 @@ class KrakenSegment(Processor):
             log.info("Using legacy segmenter")
             segment = legacy_segment
         else:
+            from kraken.lib.vgsl import TorchVGSLModel
+            from kraken.blla import segment as blla_segment
             log.info("Using blla segmenter")
             blla_model_fname = self.resolve_resource(self.parameter['blla_model'])
             kwargs['model'] = TorchVGSLModel.load_model(blla_model_fname)
@@ -61,7 +61,15 @@ class KrakenSegment(Processor):
             res = segment(page_image, **kwargs)
             log.info("Finished segmentation, serializing")
             if use_legacy:
-                raise NotImplementedError("legacy segmenter NIH")
+                print(res)
+                for idx_line, line_x0y0x1y1 in enumerate(res['boxes']):
+                    region_elem = TextRegionType(
+                        id='region_line_%s' % (idx_line + 1),
+                        Coords=CoordsType(points=points_from_x0y0x1y1(line_x0y0x1y1)))
+                    region_elem.add_TextLine(TextLineType(
+                        id='region_line_%s_line' % (idx_line + 1),
+                        Coords=CoordsType(points=points_from_x0y0x1y1(line_x0y0x1y1))))
+                    page.add_TextRegion(region_elem)
             else:
                 handled_lines = {}
                 for idx_region, region_polygon_ in enumerate(res['regions']['text']):
@@ -89,6 +97,7 @@ class KrakenSegment(Processor):
                             Coords=CoordsType(points=points_from_polygon(line_dict['boundary'])))
                         region_elem.add_TextLine(TextLineType(
                             id='region_line_%s_line' % (idx_line + 1),
+                            Baseline=BaselineType(points=points_from_polygon(line_dict['baseline'])),
                             Coords=CoordsType(points=points_from_polygon(line_dict['boundary']))))
                         page.add_TextRegion(region_elem)
             file_id = make_file_id(input_file, self.output_file_grp)
