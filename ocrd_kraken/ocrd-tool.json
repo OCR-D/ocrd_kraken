@@ -44,8 +44,7 @@
           "default": "blla.mlmodel"
         },
         "device": {"description": "GPU ID or 'cpu' to run on CPU only", "type": "string", "default": "cpu"},
-        "use_legacy": {"description": "Use legacy box segmenter as opposed to neural net baseline segmenter", "type": "boolean", "default": false},
-        "level-of-operation": {"description": "level-of-operation", "type": "string", "default": "page", "enum": ["page", "block", "line"]}
+        "use_legacy": {"description": "Use legacy box segmenter as opposed to neural net baseline segmenter", "type": "boolean", "default": false}
       }
     },
     "ocrd-kraken-ocr": {

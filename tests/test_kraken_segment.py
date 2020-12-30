@@ -16,14 +16,13 @@ class TestKrakenSegment(TestCase):
 
     def test_run1(self):
         resolver = Resolver()
-        # with pushd_popd(tempdir=True) as tempdir:
-        with pushd_popd('/tmp/kraken-test') as tempdir:
+        with pushd_popd(tempdir=True) as tempdir:
+        # with pushd_popd('/tmp/kraken-test') as tempdir:
             workspace = resolver.workspace_from_url(assets.path_to('communist_manifesto/data/mets.xml'), dst_dir=tempdir)
             proc = KrakenSegment(
                 workspace,
                 input_file_grp="OCR-D-IMG-BIN",
-                output_file_grp="OCR-D-SEG-LINE-KRAKEN",
-                parameter={'level-of-operation': 'line'}
+                output_file_grp="OCR-D-SEG-LINE-KRAKEN"
             )
             proc.process()
             workspace.save_mets()

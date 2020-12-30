@@ -63,22 +63,34 @@ class KrakenSegment(Processor):
             if use_legacy:
                 raise NotImplementedError("legacy segmenter NIH")
             else:
+                handled_lines = {}
                 for idx_region, region_polygon_ in enumerate(res['regions']['text']):
                     region_elem = TextRegionType(
-                            id=f'region_{idx_region}',
+                            id='region_%s' % (idx_region + 1),
                             Coords=CoordsType(points=points_from_polygon(region_polygon_)))
                     region_polygon = geom.Polygon(region_polygon_)
-                    line_idx = 0
-                    for line_dict in res['lines']:
+                    for idx_line, line_dict in enumerate(res['lines']):
                         line_polygon = geom.Polygon(line_dict['boundary'])
                         if region_polygon.contains(line_polygon):
+                            if idx_line in handled_lines:
+                                log.error("Line %s was already added to region %s" % (idx_line, handled_lines[idx_line]))
+                                continue
                             region_elem.add_TextLine(TextLineType(
-                                id=f'region_{idx_region}_line_{line_idx}',
+                                id='region_%s_line_%s' % (idx_region + 1, idx_line + 1),
                                 Baseline=BaselineType(points=points_from_polygon(line_dict['baseline'])),
                                 Coords=CoordsType(points=points_from_polygon(line_dict['boundary']))))
-                        # TODO handle unmatched or twice-matched lines
-                        line_idx += 1
+                            handled_lines[idx_line] = idx_region
                     page.add_TextRegion(region_elem)
+                for idx_line, line_dict in enumerate(res['lines']):
+                    if idx_line not in handled_lines:
+                        log.error("Line %s could not be assigned a region, creating a dummy region", idx_line)
+                        region_elem = TextRegionType(
+                            id='region_line_%s' % (idx_line + 1),
+                            Coords=CoordsType(points=points_from_polygon(line_dict['boundary'])))
+                        region_elem.add_TextLine(TextLineType(
+                            id='region_line_%s_line' % (idx_line + 1),
+                            Coords=CoordsType(points=points_from_polygon(line_dict['boundary']))))
+                        page.add_TextRegion(region_elem)
             file_id = make_file_id(input_file, self.output_file_grp)
             pcgts.set_pcGtsId(file_id)
             self.workspace.add_file(
