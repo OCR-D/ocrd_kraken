@@ -50,12 +50,18 @@
     "ocrd-kraken-recognize": {
       "executable": "ocrd-kraken-recognize",
       "categories": ["Text recognition and optimization"],
-      "steps": [
-        "recognition/text-recognition"
-      ],
+      "steps": ["recognition/text-recognition"],
       "description": "OCR with kraken",
-      "parameters": {}
+      "parameters": {
+        "model": {"description": "Model to recognize with", "cacheable": true, "default": "en_best.mlmodel"},
+        "pad": {"description": "Extra blank padding to the left and right of text line.", "type": "number", "format": "integer", "default": 16},
+        "bidi_reordering": {
+          "description": "Reorder classes in the ocr_record according to  the Unicode bidirectional algorithm for correct display.",
+          "type": "boolean",
+          "default": true
+        },
+        "device": {"description": "GPU ID or 'cpu' to run on CPU only", "type": "string", "default": "cpu"}
+      }
     }
-
   }
 }

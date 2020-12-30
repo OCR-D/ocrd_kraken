@@ -9,8 +9,6 @@ from ocrd import Resolver, run_processor
 from ocrd_utils import initLogging, pushd_popd
 from ocrd_kraken.recognize import KrakenRecognize
 
-WORKSPACE_DIR = '/tmp/ocrd-kraken-ocr-test'
-
 class TestKrakenRecognize(TestCase):
 
     def setUp(self):
@@ -18,15 +16,17 @@ class TestKrakenRecognize(TestCase):
 
     def test_recognize(self):
         resolver = Resolver()
-        with pushd_popd(tempdir=True) as tempdir:
+        with pushd_popd('/tmp/kraken-test') as tempdir:
+        # with pushd_popd(tempdir=True) as tempdir:
             workspace = resolver.workspace_from_url(assets.path_to('communist_manifesto/data/mets.xml'), dst_dir=tempdir)
-            proc = KrakenSegment(
+            proc = KrakenRecognize(
                 workspace,
-                input_file_grp="OCR-D-IMG-BIN",
-                output_file_grp="OCR-D-SEG-LINE-KRAKEN",
+                input_file_grp="OCR-D-SEG-KRAKEN",
+                output_file_grp="OCR-D-OCR-KRAKEN",
             )
             proc.process()
             workspace.save_mets()
+            assert 0
 
 if __name__ == "__main__":
-    main()
+    main(__file__)
