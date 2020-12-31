@@ -29,8 +29,8 @@ class TestKrakenSegment(TestCase):
 
     def test_run_legacy(self):
         resolver = Resolver()
-        # with pushd_popd(tempdir=True) as tempdir:
-        with pushd_popd('/tmp/kraken-test') as tempdir:
+        # with pushd_popd('/tmp/kraken-test') as tempdir:
+        with pushd_popd(tempdir=True) as tempdir:
             workspace = resolver.workspace_from_url(assets.path_to('communist_manifesto/data/mets.xml'), dst_dir=tempdir)
             proc = KrakenSegment(
                 workspace,
