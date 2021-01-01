@@ -4,7 +4,10 @@ from ocrd_utils import (
     getLogger,
     make_file_id,
     assert_file_grp_cardinality,
+    bbox_from_polygon,
     points_from_polygon,
+    points_from_bbox,
+    polygon_from_points,
     bbox_from_points,
     MIMETYPE_PAGE,
 )
@@ -60,24 +63,27 @@ class KrakenRecognize(Processor):
             for ocr_record in rpred(model, page_image, bounds, pad, bidi_reordering):
                 idx_word = 0
                 current_word = _make_word(all_lines[idx_line].id, idx_word)
+                idx_glyph = 0
                 for text, coords, conf in ocr_record:
-                    idx_glyph = 0
                     if text == ' ':
                         idx_glyph = 0
                         idx_word += 1
                         all_lines[idx_line].add_Word(current_word)
+                        current_word.get_Coords().points = points_from_bbox(*bbox_from_polygon(polygon_from_points(current_word.get_Coords().points.strip())))
                         current_word = _make_word(all_lines[idx_line].id, idx_word)
                     else:
+                        idx_glyph += 1
                         current_word.get_TextEquiv()[0].Unicode += text
+                        current_word.get_Coords().points += ' ' + points_from_polygon(coords)
                         # TODO word coordinates
                         glyph = GlyphType(
                             id='%s_glyph_%s' % (current_word.id, idx_glyph),
                             Coords=CoordsType(points=points_from_polygon(coords)))
                         glyph.add_TextEquiv(TextEquivType(Unicode=text, conf=conf))
                         current_word.add_Glyph(glyph)
+                current_word.get_Coords().points = points_from_bbox(*bbox_from_polygon(polygon_from_points(current_word.get_Coords().points.strip())))
                 all_lines[idx_line].add_Word(current_word)
                 log.info('Recognizing line %s ' % all_lines[idx_line].id)
-                # TODO line coordinates
                 all_lines[idx_line].add_TextEquiv(TextEquivType(
                     Unicode=ocr_record.prediction))
                 idx_line += 1
