@@ -6,8 +6,9 @@ from ocrd_utils import (
     assert_file_grp_cardinality,
     make_file_id,
     concat_padded,
-    points_from_x0y0x1y1,
+    polygon_from_x0y0x1y1,
     points_from_polygon,
+    coordinates_for_segment,
     MIMETYPE_PAGE
 )
 from ocrd_models.ocrd_page import TextRegionType, TextLineType, CoordsType, BaselineType, to_xml
@@ -56,49 +57,57 @@ class KrakenSegment(Processor):
             pcgts = page_from_file(self.workspace.download_file(input_file))
             self.add_metadata(pcgts)
             page = pcgts.get_Page()
-            page_image, _, _ = self.workspace.image_from_page(page, page_id, feature_selector="binarized")
+            page_image, page_coords, _ = self.workspace.image_from_page(page, page_id, feature_selector="binarized")
             log.info('Segmenting with %s segmenter' % ('legacy' if use_legacy else 'blla'))
             res = segment(page_image, **kwargs)
             log.info("Finished segmentation, serializing")
             if use_legacy:
                 print(res)
                 for idx_line, line_x0y0x1y1 in enumerate(res['boxes']):
+                    line_poly = polygon_from_x0y0x1y1(line_x0y0x1y1)
+                    line_poly = coordinates_for_segment(line_poly, None, page_coords)
+                    line_points = points_from_polygon(line_poly)
                     region_elem = TextRegionType(
                         id='region_line_%s' % (idx_line + 1),
-                        Coords=CoordsType(points=points_from_x0y0x1y1(line_x0y0x1y1)))
+                        Coords=CoordsType(points=line_points))
                     region_elem.add_TextLine(TextLineType(
                         id='region_line_%s_line' % (idx_line + 1),
-                        Coords=CoordsType(points=points_from_x0y0x1y1(line_x0y0x1y1))))
+                        Coords=CoordsType(points=line_points)))
                     page.add_TextRegion(region_elem)
             else:
                 handled_lines = {}
-                for idx_region, region_polygon_ in enumerate(res['regions']['text']):
+                for idx_region, region_poly in enumerate(res['regions']['text']):
+                    region_poly = coordinates_for_segment(region_poly, None, page_coords)
                     region_elem = TextRegionType(
                             id='region_%s' % (idx_region + 1),
-                            Coords=CoordsType(points=points_from_polygon(region_polygon_)))
-                    region_polygon = geom.Polygon(region_polygon_)
+                            Coords=CoordsType(points=points_from_polygon(region_poly)))
+                    region_polygon = geom.Polygon(region_poly)
                     for idx_line, line_dict in enumerate(res['lines']):
-                        line_polygon = geom.Polygon(line_dict['boundary'])
+                        line_poly = coordinates_for_segment(line_dict['boundary'], None, page_coords)
+                        line_baseline = coordinates_for_segment(line_dict['baseline'], None, page_coords)
+                        line_polygon = geom.Polygon(line_poly)
                         if region_polygon.contains(line_polygon):
                             if idx_line in handled_lines:
                                 log.error("Line %s was already added to region %s" % (idx_line, handled_lines[idx_line]))
                                 continue
                             region_elem.add_TextLine(TextLineType(
                                 id='region_%s_line_%s' % (idx_region + 1, idx_line + 1),
-                                Baseline=BaselineType(points=points_from_polygon(line_dict['baseline'])),
-                                Coords=CoordsType(points=points_from_polygon(line_dict['boundary']))))
+                                Baseline=BaselineType(points=points_from_polygon(line_baseline)),
+                                Coords=CoordsType(points=points_from_polygon(line_poly))))
                             handled_lines[idx_line] = idx_region
                     page.add_TextRegion(region_elem)
                 for idx_line, line_dict in enumerate(res['lines']):
                     if idx_line not in handled_lines:
                         log.error("Line %s could not be assigned a region, creating a dummy region", idx_line)
+                        line_poly = coordinates_for_segment(line_dict['boundary'], None, page_coords)
+                        line_baseline = coordinates_for_segment(line_dict['baseline'], None, page_coords)
                         region_elem = TextRegionType(
                             id='region_line_%s' % (idx_line + 1),
-                            Coords=CoordsType(points=points_from_polygon(line_dict['boundary'])))
+                            Coords=CoordsType(points=points_from_polygon(line_poly)))
                         region_elem.add_TextLine(TextLineType(
                             id='region_line_%s_line' % (idx_line + 1),
-                            Baseline=BaselineType(points=points_from_polygon(line_dict['baseline'])),
-                            Coords=CoordsType(points=points_from_polygon(line_dict['boundary']))))
+                            Baseline=BaselineType(points=points_from_polygon(line_baseline)),
+                            Coords=CoordsType(points=points_from_polygon(line_poly))))
                         page.add_TextRegion(region_elem)
             file_id = make_file_id(input_file, self.output_file_grp)
             pcgts.set_pcGtsId(file_id)
