@@ -34,7 +34,7 @@
       "parameters": {
         "text_direction": {"type": "string", "description": "Sets principal text direction", "enum": ["horizontal-lr", "horizontal-rl", "vertical-lr", "vertical-rl"], "default": "horizontal-lr"},
         "maxcolseps": {"description": "Maximum number of column separators. Set to 0 for single-column text to avoid unnecessary computation.", "type": "number", "format": "integer", "default": 2},
-        "scale": {"description": "scale factor", "type": "number", "format": "float", "default": 0},
+        "scale": {"description": "mean xheight size of glyphs (guessed if zero)", "type": "number", "format": "float", "default": 0},
         "black_colseps": {"description": "Whether column separators are assumed to be vertical black lines or not", "type": "boolean", "default": false},
         "remove_hlines": {"description": "Remove horizontal colseps before segmentation", "type": "boolean", "default": true},
         "blla_model": {

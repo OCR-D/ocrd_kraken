@@ -15,6 +15,7 @@ from ocrd_models.ocrd_page import TextRegionType, TextLineType, CoordsType, Base
 from ocrd_modelfactory import page_from_file
 
 import shapely.geometry as geom
+from shapely.prepared import prep as geom_prep
 from kraken.pageseg import segment as legacy_segment
 
 from .config import OCRD_TOOL
@@ -57,12 +58,21 @@ class KrakenSegment(Processor):
             pcgts = page_from_file(self.workspace.download_file(input_file))
             self.add_metadata(pcgts)
             page = pcgts.get_Page()
-            page_image, page_coords, _ = self.workspace.image_from_page(page, page_id, feature_selector="binarized")
+            page_image, page_coords, page_info = self.workspace.image_from_page(page, page_id, feature_selector="binarized")
+            if page_info.resolution != 1:
+                dpi = page_info.resolution
+                if page_info.resolutionUnit == 'cm':
+                    dpi = round(dpi * 2.54)
+                zoom = 300.0 / dpi
+            else:
+                zoom = 1.0
+            # TODO: be DPI-relative
             log.info('Segmenting with %s segmenter' % ('legacy' if use_legacy else 'blla'))
+            # TODO: be incremental by aggregating existing regions and passing `mask`
             res = segment(page_image, **kwargs)
             log.info("Finished segmentation, serializing")
             if use_legacy:
-                print(res)
+                log.debug(res)
                 for idx_line, line_x0y0x1y1 in enumerate(res['boxes']):
                     line_poly = polygon_from_x0y0x1y1(line_x0y0x1y1)
                     line_poly = coordinates_for_segment(line_poly, None, page_coords)
@@ -81,11 +91,13 @@ class KrakenSegment(Processor):
                     region_elem = TextRegionType(
                             id='region_%s' % (idx_region + 1),
                             Coords=CoordsType(points=points_from_polygon(region_poly)))
-                    region_polygon = geom.Polygon(region_poly)
+                    region_polygon = make_valid(geom.Polygon(region_poly))
+                    # enlarge to avoid loosing slightly extruding text lines
+                    region_polygon = geom_prep(region_polygon.buffer(20/zoom))
                     for idx_line, line_dict in enumerate(res['lines']):
                         line_poly = coordinates_for_segment(line_dict['boundary'], None, page_coords)
                         line_baseline = coordinates_for_segment(line_dict['baseline'], None, page_coords)
-                        line_polygon = geom.Polygon(line_poly)
+                        line_polygon = make_valid(geom.Polygon(line_poly))
                         if region_polygon.contains(line_polygon):
                             if idx_line in handled_lines:
                                 log.error("Line %s was already added to region %s" % (idx_line, handled_lines[idx_line]))
@@ -118,3 +130,17 @@ class KrakenSegment(Processor):
                 mimetype=MIMETYPE_PAGE,
                 local_filename=join(self.output_file_grp, f'{file_id}.xml'),
                 content=to_xml(pcgts))
+
+def make_valid(polygon):
+    for split in range(1, len(polygon.exterior.coords)-1):
+        if polygon.is_valid or polygon.simplify(polygon.area).is_valid:
+            break
+        # simplification may not be possible (at all) due to ordering
+        # in that case, try another starting point
+        polygon = geom.Polygon(polygon.exterior.coords[-split:]+polygon.exterior.coords[:-split])
+    for tolerance in range(1, int(polygon.area)):
+        if polygon.is_valid:
+            break
+        # simplification may require a larger tolerance
+        polygon = polygon.simplify(tolerance)
+    return polygon
