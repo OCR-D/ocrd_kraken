@@ -50,7 +50,7 @@ class KrakenRecognize(Processor):
 
             log.info("Converting PAGE to kraken 'bounds' format")
             bounds = {'boxes': [], 'script_detection': True, 'text_direction': 'horizontal-lr'}
-            all_lines = page.get_AllTextLine()
+            all_lines = page.get_AllTextLines()
             for line in all_lines:
                 bounds['boxes'].append(bbox_from_points(line.get_Coords().points))
 
