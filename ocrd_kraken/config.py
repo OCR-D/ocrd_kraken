@@ -1,4 +1,5 @@
 import json
-from pkg_resources import resource_string
+from pkg_resources import resource_filename
 
-OCRD_TOOL = json.loads(resource_string(__name__, 'ocrd-tool.json').decode('utf8'))
+with open(resource_filename(__name__, 'ocrd-tool.json'), 'r', encoding='utf-8') as f:
+    OCRD_TOOL = json.load(f)

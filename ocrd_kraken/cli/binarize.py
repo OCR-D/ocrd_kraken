@@ -5,6 +5,5 @@ from ocrd_kraken.binarize import KrakenBinarize
 
 @click.command()
 @ocrd_cli_options
-def ocrd_kraken_binarize(*args, **kwargs):
+def cli(*args, **kwargs):
     return ocrd_cli_wrap_processor(KrakenBinarize, *args, **kwargs)
-

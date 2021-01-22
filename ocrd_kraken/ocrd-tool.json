@@ -1,6 +1,6 @@
 {
   "git_url": "https://github.com/OCR-D/ocrd_kraken",
-  "version": "0.0.2",
+  "version": "0.1.2",
   "tools": {
     "ocrd-kraken-binarize": {
       "executable": "ocrd-kraken-binarize",
@@ -15,6 +15,7 @@
       "description": "Binarize images with kraken",
       "parameters": {
         "level-of-operation": {
+          "description": "level-of-operation",
           "type": "string",
           "default": "page",
           "enum": ["page", "block", "line"]
@@ -31,44 +32,36 @@
       ],
       "description": "Block segmentation with kraken",
       "parameters": {
-        "text_direction": {
+        "text_direction": {"type": "string", "description": "Sets principal text direction", "enum": ["horizontal-lr", "horizontal-rl", "vertical-lr", "vertical-rl"], "default": "horizontal-lr"},
+        "maxcolseps": {"description": "Maximum number of column separators. Set to 0 for single-column text to avoid unnecessary computation.", "type": "number", "format": "integer", "default": 2},
+        "scale": {"description": "mean xheight size of glyphs (guessed if zero)", "type": "number", "format": "float", "default": 0},
+        "black_colseps": {"description": "Whether column separators are assumed to be vertical black lines or not", "type": "boolean", "default": false},
+        "remove_hlines": {"description": "Remove horizontal colseps before segmentation", "type": "boolean", "default": true},
+        "blla_model": {
+          "description": "Model used for baseline detection. Use kraken-provided model if not give. Ignored if use_legacy.",
           "type": "string",
-          "description": "Sets principal text direction",
-          "enum": ["horizontal-lr", "horizontal-rl", "vertical-lr", "vertical-rl"],
-          "default": "horizontal-lr"
+          "cacheable": true,
+          "default": "blla.mlmodel"
         },
-        "script_detect": {
-          "type": "boolean",
-          "description": "Enable script detection on segmenter output",
-          "default": false
-        },
-        "maxcolseps": {"type": "number", "format": "integer", "default": 2},
-        "scale": {"type": "number", "format": "float", "default": 0},
-        "black_colseps": {"type": "boolean", "default": false},
-        "white_colseps": {"type": "boolean", "default": false},
-        "level-of-operation": {
-          "type": "string",
-          "default": "page",
-          "enum": ["page", "block", "line"]
-        }
+        "device": {"description": "GPU ID or 'cpu' to run on CPU only", "type": "string", "default": "cpu"},
+        "use_legacy": {"description": "Use legacy box segmenter as opposed to neural net baseline segmenter", "type": "boolean", "default": false}
       }
     },
-    "ocrd-kraken-ocr": {
-      "executable": "ocrd-kraken-ocr",
+    "ocrd-kraken-recognize": {
+      "executable": "ocrd-kraken-recognize",
       "categories": ["Text recognition and optimization"],
-      "steps": [
-        "recognition/text-recognition"
-      ],
+      "steps": ["recognition/text-recognition"],
       "description": "OCR with kraken",
       "parameters": {
-        "lines-json": {
-          "type": "string",
-          "format": "url",
-          "required": "true",
-          "description": "URL to line segmentation in JSON"
-        }
+        "model": {"description": "Model to recognize with", "cacheable": true, "default": "en_best.mlmodel"},
+        "pad": {"description": "Extra blank padding to the left and right of text line.", "type": "number", "format": "integer", "default": 16},
+        "bidi_reordering": {
+          "description": "Reorder classes in the ocr_record according to  the Unicode bidirectional algorithm for correct display.",
+          "type": "boolean",
+          "default": true
+        },
+        "device": {"description": "GPU ID or 'cpu' to run on CPU only", "type": "string", "default": "cpu"}
       }
     }
-
   }
 }
