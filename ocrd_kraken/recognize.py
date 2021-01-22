@@ -66,6 +66,8 @@ class KrakenRecognize(Processor):
                 idx_glyph = 0
                 for text, coords, conf in ocr_record:
                     if text == ' ':
+                        if idx_glyph == 0:
+                            continue
                         idx_glyph = 0
                         idx_word += 1
                         all_lines[idx_line].add_Word(current_word)
