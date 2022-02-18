@@ -1,2 +1,2 @@
-ocrd >= 2.22.0b3
-kraken @ git+https://github.com/mittagessen/kraken.git@3.0b18
+ocrd >= 2.30
+kraken >= 3.0

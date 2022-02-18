@@ -86,14 +86,29 @@
       "steps": ["recognition/text-recognition"],
       "description": "OCR with kraken",
       "parameters": {
-        "model": {"description": "Model to recognize with", "cacheable": true, "default": "en_best.mlmodel"},
-        "pad": {"description": "Extra blank padding to the left and right of text line.", "type": "number", "format": "integer", "default": 16},
+        "model": {
+          "description": "OCR model to recognize with",
+          "format": "uri",
+          "content-type": "application/python-cpickle",
+          "cacheable": true,
+          "default": "en_best.mlmodel"
+        },
+        "pad": {
+          "description": "Extra blank padding to the left and right of text line.",
+          "type": "number",
+          "format": "integer",
+          "default": 16
+        },
         "bidi_reordering": {
           "description": "Reorder classes in the ocr_record according to  the Unicode bidirectional algorithm for correct display.",
           "type": "boolean",
           "default": true
         },
-        "device": {"description": "GPU ID or 'cpu' to run on CPU only", "type": "string", "default": "cpu"}
+        "device": {
+          "description": "CUDA ID (e.g. 'cuda:0') for computation on GPU, or 'cpu' to run on CPU only",
+          "type": "string",
+          "default": "cpu"
+        }
       }
     }
   }
