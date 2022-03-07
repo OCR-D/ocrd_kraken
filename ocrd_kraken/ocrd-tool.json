@@ -88,6 +88,7 @@
       "parameters": {
         "model": {
           "description": "OCR model to recognize with",
+          "type": "string",
           "format": "uri",
           "content-type": "application/python-cpickle",
           "cacheable": true,
