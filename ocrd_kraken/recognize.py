@@ -83,9 +83,10 @@ class KrakenRecognize(Processor):
                             Coords=CoordsType(points=points_from_polygon(coords)))
                         glyph.add_TextEquiv(TextEquivType(Unicode=text, conf=conf))
                         current_word.add_Glyph(glyph)
-                current_word.get_Coords().points = points_from_bbox(*bbox_from_polygon(polygon_from_points(current_word.get_Coords().points.strip())))
-                all_lines[idx_line].add_Word(current_word)
-                log.info('Recognizing line %s ' % all_lines[idx_line].id)
+                if idx_glyph > 0:
+                    current_word.get_Coords().points = points_from_bbox(*bbox_from_polygon(polygon_from_points(current_word.get_Coords().points.strip())))
+                    all_lines[idx_line].add_Word(current_word)
+                log.info('Recognized line %s ' % all_lines[idx_line].id)
                 all_lines[idx_line].add_TextEquiv(TextEquivType(
                     Unicode=ocr_record.prediction))
                 idx_line += 1
