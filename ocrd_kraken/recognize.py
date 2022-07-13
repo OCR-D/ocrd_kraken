@@ -4,6 +4,8 @@ from ocrd_utils import (
     getLogger,
     make_file_id,
     assert_file_grp_cardinality,
+    coordinates_of_segment,
+    coordiantes_for_segment,
     bbox_from_polygon,
     points_from_polygon,
     points_from_bbox,
@@ -56,7 +58,7 @@ class KrakenRecognize(Processor):
             pcgts = page_from_file(self.workspace.download_file(input_file))
             self.add_metadata(pcgts)
             page = pcgts.get_Page()
-            page_image, _, _ = self.workspace.image_from_page(
+            page_image, page_coords, _ = self.workspace.image_from_page(
                 page, page_id,
                 feature_selector="binarized" if model.one_channel_mode == '1')
 
@@ -66,7 +68,8 @@ class KrakenRecognize(Processor):
             for line in all_lines:
                 # FIXME: see whether model needs baselines or bbox crops (seg_type)
                 # FIXME: if we have baselines, pass 'lines' (baseline+boundary) instead of 'boxes'
-                bounds['boxes'].append(bbox_from_points(line.get_Coords().points))
+                poly = coordinates_of_segment(line, None, page_coords)
+                bounds['boxes'].append(bbox_from_polygon(poly))
 
             idx_line = 0
             def _make_word(id_line, idx_word):
@@ -78,7 +81,8 @@ class KrakenRecognize(Processor):
                 idx_word = 0
                 current_word = _make_word(all_lines[idx_line].id, idx_word)
                 idx_glyph = 0
-                for text, coords, conf in ocr_record:
+                for text, poly, conf in ocr_record:
+                    poly = coordinates_for_segment(poly, None, page_coords)
                     if text == ' ':
                         if idx_glyph == 0:
                             continue
@@ -90,11 +94,11 @@ class KrakenRecognize(Processor):
                     else:
                         idx_glyph += 1
                         current_word.get_TextEquiv()[0].Unicode += text
-                        current_word.get_Coords().points += ' ' + points_from_polygon(coords)
+                        current_word.get_Coords().points += ' ' + points_from_polygon(poly)
                         # TODO word coordinates
                         glyph = GlyphType(
                             id='%s_glyph_%s' % (current_word.id, idx_glyph),
-                            Coords=CoordsType(points=points_from_polygon(coords)))
+                            Coords=CoordsType(points=points_from_polygon(poly)))
                         glyph.add_TextEquiv(TextEquivType(Unicode=text, conf=conf))
                         current_word.add_Glyph(glyph)
                 if idx_glyph > 0:
