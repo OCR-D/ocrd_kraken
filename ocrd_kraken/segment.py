@@ -17,7 +17,6 @@ from ocrd_modelfactory import page_from_file
 
 import shapely.geometry as geom
 from shapely.prepared import prep as geom_prep
-from kraken.pageseg import segment as legacy_segment
 
 from .config import OCRD_TOOL
 
@@ -26,7 +25,34 @@ class KrakenSegment(Processor):
     def __init__(self, *args, **kwargs):
         kwargs['ocrd_tool'] = OCRD_TOOL['tools']['ocrd-kraken-segment']
         kwargs['version'] = OCRD_TOOL['version']
-        super(KrakenSegment, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        if hasattr(self, 'output_file_grp'):
+            # processing context
+            self.setup()
+
+    def setup(self):
+        """
+        Load models
+        """
+        kwargs = {}
+        kwargs['text_direction'] = self.parameter['text_direction']
+        self.use_legacy = self.parameter['use_legacy']
+        if self.use_legacy:
+            from kraken.pageseg import segment
+            kwargs['scale'] = self.parameter['scale']
+            kwargs['maxcolseps'] = self.parameter['maxcolseps']
+            kwargs['black_colseps'] = self.parameter['black_colseps']
+            log.info("Using legacy segmenter")
+        else:
+            from kraken.lib.vgsl import TorchVGSLModel
+            from kraken.blla import segment
+            log.info("Using blla segmenter")
+            blla_model_fname = self.resolve_resource(self.parameter['blla_model'])
+            kwargs['model'] = TorchVGSLModel.load_model(blla_model_fname)
+            kwargs['device'] = self.parameter['device']
+        def segmenter(img):
+            return segment(img, **kwargs)
+        self.segmenter = segmenter
 
     def process(self):
         """
@@ -35,25 +61,8 @@ class KrakenSegment(Processor):
         log = getLogger('processor.KrakenSegment')
         assert_file_grp_cardinality(self.input_file_grp, 1)
         assert_file_grp_cardinality(self.output_file_grp, 1)
-        kwargs = {}
-        kwargs['text_direction'] = self.parameter['text_direction']
-        use_legacy = self.parameter['use_legacy']
-        if use_legacy:
-            kwargs['scale'] = self.parameter['scale']
-            kwargs['maxcolseps'] = self.parameter['maxcolseps']
-            kwargs['black_colseps'] = self.parameter['black_colseps']
-            log.info("Using legacy segmenter")
-            segment = legacy_segment
-        else:
-            from kraken.lib.vgsl import TorchVGSLModel
-            from kraken.blla import segment as blla_segment
-            log.info("Using blla segmenter")
-            blla_model_fname = self.resolve_resource(self.parameter['blla_model'])
-            kwargs['model'] = TorchVGSLModel.load_model(blla_model_fname)
-            kwargs['device'] = self.parameter['device']
-            segment = blla_segment
 
-        for (n, input_file) in enumerate(self.input_files):
+        for n, input_file in enumerate(self.input_files):
             page_id = input_file.pageId or input_file.ID
             log.info("INPUT FILE %i / %s of %s", n, page_id, len(self.input_files))
             pcgts = page_from_file(self.workspace.download_file(input_file))
@@ -61,7 +70,7 @@ class KrakenSegment(Processor):
             page = pcgts.get_Page()
             page_image, page_coords, page_info = self.workspace.image_from_page(
                 page, page_id,
-                feature_selector="binarized" if use_legacy else "")
+                feature_selector="binarized" if self.use_legacy else "")
             if page_info.resolution != 1:
                 dpi = page_info.resolution
                 if page_info.resolutionUnit == 'cm':
@@ -70,11 +79,11 @@ class KrakenSegment(Processor):
             else:
                 zoom = 1.0
             # TODO: be DPI-relative
-            log.info('Segmenting with %s segmenter' % ('legacy' if use_legacy else 'blla'))
+            log.info('Segmenting with %s segmenter' % ('legacy' if self.use_legacy else 'blla'))
             # TODO: be incremental by aggregating existing regions and passing `mask`
-            res = segment(page_image, **kwargs)
+            res = self.segmenter(page_image)
             log.info("Finished segmentation, serializing")
-            if use_legacy:
+            if self.use_legacy:
                 log.debug(res)
                 for idx_line, line_x0y0x1y1 in enumerate(res['boxes']):
                     line_poly = polygon_from_x0y0x1y1(line_x0y0x1y1)
