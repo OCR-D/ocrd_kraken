@@ -61,12 +61,28 @@
           "default": true
         },
         "blla_model": {
-          "description": "Model used for baseline detection. Use kraken-provided model if not give. Ignored if use_legacy.",
+          "description": "Model used for baseline detection and page segmentation. Ignored if use_legacy.",
           "type": "string",
           "format": "uri",
           "content-type": "application/python-cpickle",
           "cacheable": true,
           "default": "blla.mlmodel"
+        },
+        "blla_classes": {
+          "description": "Class mapping for the region types trained into blla_model.",
+          "type": "object",
+          "minProperties": 2,
+          "additionalProperties": { "type": "string",
+                                    "enum": ["TextRegion", "ImageRegion", "LineDrawingRegion",
+                                             "GraphicRegion", "TableRegion", "ChartRegion",
+                                             "MapRegion", "SeparatorRegion", "MathsRegion",
+                                             "ChemRegion", "MusicRegion", "AdvertRegion",
+                                             "NoiseRegion", "UnknownRegion", "CustomRegion"] },
+          "default": {"text": "TextRegion", "image": "ImageRegion", "line drawing": "LineDrawingRegion",
+                      "graphic": "GraphicRegion", "table": "TableRegion", "chart": "ChartRegion",
+                      "map": "MapRegion", "separator": "SeparatorRegion", "maths": "MathsRegion",
+                      "chem": "ChemRegion", "music": "MusicRegion", "advert": "AdvertRegion",
+                      "noise": "NoiseRegion", "unknown": "UnknownRegion", "custom": "CustomRegion"}
         },
         "device": {
           "description": "GPU ID or 'cpu' to run on CPU only", 

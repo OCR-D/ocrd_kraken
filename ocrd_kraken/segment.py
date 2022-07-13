@@ -11,6 +11,7 @@ from ocrd_utils import (
     coordinates_for_segment,
     MIMETYPE_PAGE
 )
+import ocrd_models.ocrd_page
 from ocrd_models.ocrd_page import TextRegionType, TextLineType, CoordsType, BaselineType, to_xml
 from ocrd_modelfactory import page_from_file
 
@@ -88,11 +89,19 @@ class KrakenSegment(Processor):
                     page.add_TextRegion(region_elem)
             else:
                 handled_lines = {}
-                for idx_region, region_poly in enumerate(res['regions']['text']):
+                regions = [(type_, poly)
+                           for type_, polys in res['regions'].items()
+                           for poly in polys]
+                for idx_region, (region_type, region_poly) in enumerate(regions):
                     region_poly = coordinates_for_segment(region_poly, None, page_coords)
-                    region_elem = TextRegionType(
+                    region_type = self.parameter['blla_classes'][region_type]
+                    region_class = getattr(ocrd_models.ocrd_page, region_type + 'Type')
+                    region_elem = region_class(
                             id='region_%s' % (idx_region + 1),
                             Coords=CoordsType(points=points_from_polygon(region_poly)))
+                    getattr(page, 'add_' + region_type)(region_elem)
+                    if not region_type == 'TextRegion':
+                        continue
                     region_polygon = make_valid(geom.Polygon(region_poly))
                     # enlarge to avoid loosing slightly extruding text lines
                     region_polygon = geom_prep(region_polygon.buffer(20/zoom))
@@ -109,7 +118,6 @@ class KrakenSegment(Processor):
                                 Baseline=BaselineType(points=points_from_polygon(line_baseline)),
                                 Coords=CoordsType(points=points_from_polygon(line_poly))))
                             handled_lines[idx_line] = idx_region
-                    page.add_TextRegion(region_elem)
                 for idx_line, line_dict in enumerate(res['lines']):
                     if idx_line not in handled_lines:
                         log.error("Line %s could not be assigned a region, creating a dummy region", idx_line)
