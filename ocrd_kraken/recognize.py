@@ -21,24 +21,34 @@ class KrakenRecognize(Processor):
     def __init__(self, *args, **kwargs):
         kwargs['ocrd_tool'] = OCRD_TOOL['tools']['ocrd-kraken-recognize']
         kwargs['version'] = OCRD_TOOL['version']
-        super(KrakenRecognize, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        if hasattr(self, 'output_file_grp'):
+            # processing context
+            self.setup()
+
+    def setup(self):
+        """
+        Load models
+        """
+        log = getLogger('processor.KrakenRecognize')
+        from kraken.rpred import rpred
+        from kraken.lib.models import load_any
+        model_fname = self.resolve_resource(self.parameter['model'])
+        log.info("loading model '%s'", model_fname)
+        model = load_any(model_fname, device=self.parameter['device'])
+        def predict(page_image, bounds):
+            return rpred(model, page_image, bounds,
+                         self.parameter['pad'],
+                         self.parameter['bidi_reordering'])
+        self.predict = predict
 
     def process(self):
         """
         Recognize with kraken
         """
-        from kraken.rpred import rpred
-        from kraken.lib.models import load_any
         log = getLogger('processor.KrakenRecognize')
         assert_file_grp_cardinality(self.input_file_grp, 1)
         assert_file_grp_cardinality(self.output_file_grp, 1)
-        model_fname = self.resolve_resource(self.parameter['model'])
-        pad = self.parameter['pad']
-        bidi_reordering = self.parameter['bidi_reordering']
-        device = self.parameter['device']
-
-        log.info("loading model %s" % model_fname)
-        model = load_any(model_fname, device=device)
 
         for n, input_file in enumerate(self.input_files):
             page_id = input_file.pageId or input_file.ID
@@ -64,7 +74,7 @@ class KrakenRecognize(Processor):
                         Coords=CoordsType(points=''))
                 word.add_TextEquiv(TextEquivType(Unicode=''))
                 return word
-            for ocr_record in rpred(model, page_image, bounds, pad, bidi_reordering):
+            for ocr_record in self.predict(page_image, bounds):
                 idx_word = 0
                 current_word = _make_word(all_lines[idx_line].id, idx_word)
                 idx_glyph = 0
