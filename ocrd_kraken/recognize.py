@@ -46,12 +46,16 @@ class KrakenRecognize(Processor):
             pcgts = page_from_file(self.workspace.download_file(input_file))
             self.add_metadata(pcgts)
             page = pcgts.get_Page()
-            page_image, _, _ = self.workspace.image_from_page(page, page_id, feature_selector="binarized")
+            page_image, _, _ = self.workspace.image_from_page(
+                page, page_id,
+                feature_selector="binarized" if model.one_channel_mode == '1')
 
             log.info("Converting PAGE to kraken 'bounds' format")
             bounds = {'boxes': [], 'script_detection': True, 'text_direction': 'horizontal-lr'}
             all_lines = page.get_AllTextLines()
             for line in all_lines:
+                # FIXME: see whether model needs baselines or bbox crops (seg_type)
+                # FIXME: if we have baselines, pass 'lines' (baseline+boundary) instead of 'boxes'
                 bounds['boxes'].append(bbox_from_points(line.get_Coords().points))
 
             idx_line = 0
