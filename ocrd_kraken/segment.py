@@ -71,9 +71,7 @@ class KrakenSegment(Processor):
             page = pcgts.get_Page()
             page_image, page_coords, page_info = self.workspace.image_from_page(
                 page, page_id,
-                # "binarized" if self.use_legacy else "")
-                # binarizatation seems to always be better
-                feature_selector="binarized")
+                feature_selector="binarized" if self.use_legacy else "")
             if page_info.resolution != 1:
                 dpi = page_info.resolution
                 if page_info.resolutionUnit == 'cm':
