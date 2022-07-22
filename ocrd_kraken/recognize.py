@@ -5,7 +5,7 @@ from ocrd_utils import (
     make_file_id,
     assert_file_grp_cardinality,
     coordinates_of_segment,
-    coordiantes_for_segment,
+    coordinates_for_segment,
     bbox_from_polygon,
     points_from_polygon,
     points_from_bbox,
@@ -37,9 +37,9 @@ class KrakenRecognize(Processor):
         from kraken.lib.models import load_any
         model_fname = self.resolve_resource(self.parameter['model'])
         log.info("loading model '%s'", model_fname)
-        model = load_any(model_fname, device=self.parameter['device'])
+        self.model = load_any(model_fname, device=self.parameter['device'])
         def predict(page_image, bounds):
-            return rpred(model, page_image, bounds,
+            return rpred(self.model, page_image, bounds,
                          self.parameter['pad'],
                          self.parameter['bidi_reordering'])
         self.predict = predict
@@ -60,7 +60,7 @@ class KrakenRecognize(Processor):
             page = pcgts.get_Page()
             page_image, page_coords, _ = self.workspace.image_from_page(
                 page, page_id,
-                feature_selector="binarized" if model.one_channel_mode == '1')
+                feature_selector="binarized" if self.model.one_channel_mode == '1' else '')
 
             log.info("Converting PAGE to kraken 'bounds' format")
             bounds = {'boxes': [], 'script_detection': True, 'text_direction': 'horizontal-lr'}
