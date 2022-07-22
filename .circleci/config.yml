@@ -8,6 +8,8 @@ jobs:
     steps:
       - checkout
       - run: make deps-ubuntu deps-test deps install assets
+      - run: ocrd resmgr download ocrd-kraken-segment blla.mlmodel
+      - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
       - run: make test
 
   build-python37:
@@ -16,6 +18,8 @@ jobs:
     steps:
       - checkout
       - run: make deps-ubuntu deps-test deps install assets
+      - run: ocrd resmgr download ocrd-kraken-segment blla.mlmodel
+      - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
       - run: make test
 
   build-python38:
@@ -24,6 +28,8 @@ jobs:
     steps:
       - checkout
       - run: make deps-ubuntu deps-test deps install assets
+      - run: ocrd resmgr download ocrd-kraken-segment blla.mlmodel
+      - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
       - run: make test
 
 workflows:
