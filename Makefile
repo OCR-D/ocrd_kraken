@@ -22,7 +22,7 @@ help:
 	@echo "    docker       Build Docker image"
 	@echo "    test         Run test"
 	@echo "    repo/assets  Clone OCR-D/assets to ./repo/assets"
-	@echo "    assets       Setup test assets"
+	@echo "    tests/assets       Setup test assets"
 	@echo ""
 	@echo "  Variables"
 	@echo ""

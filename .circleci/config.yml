@@ -9,7 +9,7 @@ jobs:
       - checkout
       # workaround for OCR-D/core#923
       - run: apt-get update && apt-get install -y libgeos-dev
-      - run: make deps-ubuntu deps-test deps install assets
+      - run: make deps-ubuntu deps-test deps install
       - run: ocrd resmgr download ocrd-kraken-segment blla.mlmodel
       - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
       - run: make test
@@ -19,7 +19,7 @@ jobs:
       - image: python:3.7.15-buster
     steps:
       - checkout
-      - run: make deps-ubuntu deps-test deps install assets
+      - run: make deps-ubuntu deps-test deps install
       - run: ocrd resmgr download ocrd-kraken-segment blla.mlmodel
       - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
       - run: make test
@@ -29,7 +29,7 @@ jobs:
       - image: python:3.8.14-buster
     steps:
       - checkout
-      - run: make deps-ubuntu deps-test deps install assets
+      - run: make deps-ubuntu deps-test deps install
       - run: ocrd resmgr download ocrd-kraken-segment blla.mlmodel
       - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
       - run: make test
@@ -39,7 +39,7 @@ jobs:
       - image: python:3.9.14-buster
     steps:
       - checkout
-      - run: make deps-ubuntu deps-test deps install assets
+      - run: make deps-ubuntu deps-test deps install
       - run: ocrd resmgr download ocrd-kraken-segment blla.mlmodel
       - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
       - run: make test
