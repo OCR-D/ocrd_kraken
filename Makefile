@@ -44,15 +44,20 @@ deps-test:
 
 # Install
 install:
+	$(PIP) install .
+
+install-dev:
 	$(PIP) install -e .
 
 # Build docker image
 docker:
-	docker build -t $(DOCKER_TAG) .
+	docker build \
+        --build-arg VCS_REF=$$(git rev-parse --short HEAD) \
+        --build-arg BUILD_DATE=$$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+	-t $(DOCKER_TAG) .
 
-.PHONY: test
 # Run test
-test:
+test: tests/assets
 	$(PYTHON) -m pytest tests
 
 #
@@ -66,6 +71,8 @@ repo/assets:
 
 
 # Setup test assets
-assets: repo/assets
+tests/assets: repo/assets
 	mkdir -p tests/assets
 	cp -r -t tests/assets repo/assets/data/*
+
+.PHONY: docker install install-dev deps deps-ubuntu deps-test test help
