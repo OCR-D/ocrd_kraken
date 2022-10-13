@@ -69,7 +69,9 @@ class KrakenRecognize(Processor):
                 # FIXME: see whether model needs baselines or bbox crops (seg_type)
                 # FIXME: if we have baselines, pass 'lines' (baseline+boundary) instead of 'boxes'
                 poly = coordinates_of_segment(line, None, page_coords)
-                bounds['boxes'].append(bbox_from_polygon(poly))
+                xmin, ymin, xmax, ymax = bbox_from_polygon(poly)
+                bbox = (max(xmin, 0), max(ymin, 0), min(page_image.width, xmax), min(page_image.height, ymax))
+                bounds['boxes'].append(bbox)
 
             idx_line = 0
             def _make_word(id_line, idx_word):
