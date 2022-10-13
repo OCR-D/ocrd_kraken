@@ -18,14 +18,16 @@ help:
 	@echo "    deps         Install python deps via pip"
 	@echo "    deps-test    Install testing deps via pip"
 	@echo "    install      Install"
-	@echo "    docker       Build docker image"
+	@echo "    install-dev  Install in editable mode"
+	@echo "    docker       Build Docker image"
 	@echo "    test         Run test"
 	@echo "    repo/assets  Clone OCR-D/assets to ./repo/assets"
 	@echo "    assets       Setup test assets"
-	@echo ""
+n	@echo ""
 	@echo "  Variables"
 	@echo ""
 	@echo "    DOCKER_TAG  Docker container tag ("$(DOCKER_TAG)")"
+	@echo "    PYTEST_ARGS Additional runtime options for pytest ("$(PYTEST_ARGS)")"
 
 # END-EVAL
 
@@ -58,7 +60,7 @@ docker:
 
 # Run test
 test: tests/assets
-	$(PYTHON) -m pytest tests
+	$(PYTHON) -m pytest tests $(PYTEST_ARGS)
 
 #
 # Assets
