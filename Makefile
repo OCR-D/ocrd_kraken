@@ -23,7 +23,7 @@ help:
 	@echo "    test         Run test"
 	@echo "    repo/assets  Clone OCR-D/assets to ./repo/assets"
 	@echo "    assets       Setup test assets"
-n	@echo ""
+	@echo ""
 	@echo "  Variables"
 	@echo ""
 	@echo "    DOCKER_TAG  Docker container tag ("$(DOCKER_TAG)")"
