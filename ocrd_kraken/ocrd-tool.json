@@ -4,8 +4,8 @@
   "tools": {
     "ocrd-kraken-binarize": {
       "executable": "ocrd-kraken-binarize",
-      "input_file_grp": "OCR-D-IMG",
-      "output_file_grp": "OCR-D-IMG-BIN",
+      "input_file_grp": ["OCR-D-IMG", "OCR-D-PRE-CROP", "OCR-D-SEG-REGION", "OCR-D-SEG-LINE"],
+      "output_file_grp": ["OCR-D-PRE-BIN"],
       "categories": [
         "Image preprocessing"
       ],
@@ -24,6 +24,8 @@
     },
     "ocrd-kraken-segment": {
       "executable": "ocrd-kraken-segment",
+      "input_file_grp": ["OCR-D-IMG", "OCR-D-PRE-CROP", "OCR-D-PRE-BIN"],
+      "output_file_grp": ["OCR-D-SEG-REGION", "OCR-D-SEG-LINE"],
       "categories": [
         "Layout analysis"
       ],
@@ -94,10 +96,21 @@
           "type": "boolean", 
           "default": false
         }
-      }
+      },
+      "resources": [
+        {
+          "url": "https://github.com/mittagessen/kraken/raw/master/kraken/blla.mlmodel",
+          "size": 5047020,
+          "name": "blla.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "Pretrained baseline segmentation model"
+        }
+      ]
     },
     "ocrd-kraken-recognize": {
       "executable": "ocrd-kraken-recognize",
+      "input_file_grp": ["OCR-D-SEG-LINE"],
+      "output_file_grp": ["OCR-D-OCR-KRAK"],
       "categories": ["Text recognition and optimization"],
       "steps": ["recognition/text-recognition"],
       "description": "OCR with kraken",
@@ -126,7 +139,51 @@
           "type": "string",
           "default": "cpu"
         }
-      }
+      },
+      "resources": [
+        {
+          "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/kraken/austriannewspapers/20220520/austriannewspapers_best.mlmodel",
+          "size": 16243476,
+          "name": "austriannewspapers.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "19th and 20th century German Fraktur; https://github.com/UB-Mannheim/AustrianNewspapers/wiki/Training-with-Kraken"
+        },
+        {
+          "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/kraken/reichsanzeiger-gt/reichsanzeiger_best.mlmodel",
+          "size": 16358636,
+          "name": "reichsanzeiger.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "19th and 20th century German Fraktur ('Deutscher Reichsanzeiger'); https://github.com/UB-Mannheim/reichsanzeiger-gt/wiki/Training-with-Kraken"
+        },
+        {
+          "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/kraken/digitue-gt/digitue_best.mlmodel",
+          "size": 16364343,
+          "name": "digitue.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "mostly 19th century German Fraktur; https://github.com/UB-Mannheim/digitue-gt/wiki/Training-with-Kraken"
+        },
+        {
+          "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/kraken/digi-gt/luther_best.mlmodel",
+          "size": 16305851,
+          "name": "luther.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "16th century German Gothic; https://github.com/UB-Mannheim/digi-gt/wiki/Training"
+        },
+        {
+          "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/kraken/typewriter/typewriter.mlmodel",
+          "size": 16364780,
+          "name": "typewriter.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "20th century typewriter http://idb.ub.uni-tuebingen.de/opendigi/walz_1976, pretrained on austriannewspapers.mlmodel"
+        },
+        {
+          "url": "https://zenodo.org/record/2577813/files/en_best.mlmodel?download=1",
+          "size": 2930723,
+          "name": "en_best.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "This model has been trained on a large corpus of modern printed English text augmented with ~10000 lines of historical pages"
+        }
+      ]
     }
   }
 }

@@ -1,2 +1,2 @@
-ocrd >= 2.30
+ocrd >= 2.38
 kraken >= 3.0
