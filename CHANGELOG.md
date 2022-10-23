@@ -5,7 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-## [0.1.2] - 2019-09-24
+## [0.2.0] - 2022-07-18
+
+Added:
+
+  * text recognition with `ocrd-kraken-recognize`, #33
+  * rewrite of `ocrd-kraken-segment`, #33
+
+## [0.1.2] - 2020-09-24
 
 Fixed:
 
@@ -43,6 +50,7 @@ Changed:
 Initial release
 
 <!-- link-labels -->
+[0.2.0]: v0.2.0...v0.1.2
 [0.1.2]: v0.1.2...v0.1.1
 [0.1.1]: v0.1.1...v0.1.0
 [0.1.0]: v0.1.0...v0.0.2

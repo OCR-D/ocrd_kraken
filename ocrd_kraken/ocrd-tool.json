@@ -1,11 +1,11 @@
 {
   "git_url": "https://github.com/OCR-D/ocrd_kraken",
-  "version": "0.0.2",
+  "version": "0.2.0",
   "tools": {
     "ocrd-kraken-binarize": {
       "executable": "ocrd-kraken-binarize",
-      "input_file_grp": "OCR-D-IMG",
-      "output_file_grp": "OCR-D-IMG-BIN",
+      "input_file_grp": ["OCR-D-IMG", "OCR-D-PRE-CROP", "OCR-D-SEG-REGION", "OCR-D-SEG-LINE"],
+      "output_file_grp": ["OCR-D-PRE-BIN"],
       "categories": [
         "Image preprocessing"
       ],
@@ -15,6 +15,7 @@
       "description": "Binarize images with kraken",
       "parameters": {
         "level-of-operation": {
+          "description": "level-of-operation",
           "type": "string",
           "default": "page",
           "enum": ["page", "block", "line"]
@@ -23,6 +24,8 @@
     },
     "ocrd-kraken-segment": {
       "executable": "ocrd-kraken-segment",
+      "input_file_grp": ["OCR-D-IMG", "OCR-D-PRE-CROP", "OCR-D-PRE-BIN"],
+      "output_file_grp": ["OCR-D-SEG-REGION", "OCR-D-SEG-LINE"],
       "categories": [
         "Layout analysis"
       ],
@@ -32,43 +35,155 @@
       "description": "Block segmentation with kraken",
       "parameters": {
         "text_direction": {
-          "type": "string",
-          "description": "Sets principal text direction",
-          "enum": ["horizontal-lr", "horizontal-rl", "vertical-lr", "vertical-rl"],
+          "type": "string", 
+          "description": "Sets principal text direction", 
+          "enum": ["horizontal-lr", "horizontal-rl", "vertical-lr", "vertical-rl"], 
           "default": "horizontal-lr"
         },
-        "script_detect": {
-          "type": "boolean",
-          "description": "Enable script detection on segmenter output",
+        "maxcolseps": {
+          "description": "Maximum number of column separators. Set to 0 for single-column text to avoid unnecessary computation.", 
+          "type": "number", 
+          "format": "integer", 
+          "default": 2
+        },
+        "scale": {
+          "description": "mean xheight size of glyphs (guessed if zero)", 
+          "type": "number", 
+          "format": "float", 
+          "default": 0
+        },
+        "black_colseps": {
+          "description": "Whether column separators are assumed to be vertical black lines or not", 
+          "type": "boolean", 
           "default": false
         },
-        "maxcolseps": {"type": "number", "format": "integer", "default": 2},
-        "scale": {"type": "number", "format": "float", "default": 0},
-        "black_colseps": {"type": "boolean", "default": false},
-        "white_colseps": {"type": "boolean", "default": false},
-        "level-of-operation": {
+        "remove_hlines": {
+          "description": "Remove horizontal colseps before segmentation", 
+          "type": "boolean", 
+          "default": true
+        },
+        "blla_model": {
+          "description": "Model used for baseline detection and page segmentation. Ignored if use_legacy.",
           "type": "string",
-          "default": "page",
-          "enum": ["page", "block", "line"]
+          "format": "uri",
+          "content-type": "application/python-cpickle",
+          "cacheable": true,
+          "default": "blla.mlmodel"
+        },
+        "blla_classes": {
+          "description": "Class mapping for the region types trained into blla_model.",
+          "type": "object",
+          "minProperties": 2,
+          "additionalProperties": { "type": "string",
+                                    "enum": ["TextRegion", "ImageRegion", "LineDrawingRegion",
+                                             "GraphicRegion", "TableRegion", "ChartRegion",
+                                             "MapRegion", "SeparatorRegion", "MathsRegion",
+                                             "ChemRegion", "MusicRegion", "AdvertRegion",
+                                             "NoiseRegion", "UnknownRegion", "CustomRegion"] },
+          "default": {"text": "TextRegion", "image": "ImageRegion", "line drawing": "LineDrawingRegion",
+                      "graphic": "GraphicRegion", "table": "TableRegion", "chart": "ChartRegion",
+                      "map": "MapRegion", "separator": "SeparatorRegion", "maths": "MathsRegion",
+                      "chem": "ChemRegion", "music": "MusicRegion", "advert": "AdvertRegion",
+                      "noise": "NoiseRegion", "unknown": "UnknownRegion", "custom": "CustomRegion"}
+        },
+        "device": {
+          "description": "GPU ID or 'cpu' to run on CPU only", 
+          "type": "string", 
+          "default": "cpu"
+        },
+        "use_legacy": {
+          "description": "Use legacy box segmenter as opposed to neural net baseline segmenter", 
+          "type": "boolean", 
+          "default": false
         }
-      }
+      },
+      "resources": [
+        {
+          "url": "https://github.com/mittagessen/kraken/raw/master/kraken/blla.mlmodel",
+          "size": 5047020,
+          "name": "blla.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "Pretrained baseline segmentation model"
+        }
+      ]
     },
-    "ocrd-kraken-ocr": {
-      "executable": "ocrd-kraken-ocr",
+    "ocrd-kraken-recognize": {
+      "executable": "ocrd-kraken-recognize",
+      "input_file_grp": ["OCR-D-SEG-LINE"],
+      "output_file_grp": ["OCR-D-OCR-KRAK"],
       "categories": ["Text recognition and optimization"],
-      "steps": [
-        "recognition/text-recognition"
-      ],
+      "steps": ["recognition/text-recognition"],
       "description": "OCR with kraken",
       "parameters": {
-        "lines-json": {
+        "model": {
+          "description": "OCR model to recognize with",
           "type": "string",
-          "format": "url",
-          "required": "true",
-          "description": "URL to line segmentation in JSON"
+          "format": "uri",
+          "content-type": "application/python-cpickle",
+          "cacheable": true,
+          "default": "en_best.mlmodel"
+        },
+        "pad": {
+          "description": "Extra blank padding to the left and right of text line.",
+          "type": "number",
+          "format": "integer",
+          "default": 16
+        },
+        "bidi_reordering": {
+          "description": "Reorder classes in the ocr_record according to  the Unicode bidirectional algorithm for correct display.",
+          "type": "boolean",
+          "default": true
+        },
+        "device": {
+          "description": "CUDA ID (e.g. 'cuda:0') for computation on GPU, or 'cpu' to run on CPU only",
+          "type": "string",
+          "default": "cpu"
         }
-      }
+      },
+      "resources": [
+        {
+          "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/kraken/austriannewspapers/20220520/austriannewspapers_best.mlmodel",
+          "size": 16243476,
+          "name": "austriannewspapers.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "19th and 20th century German Fraktur; https://github.com/UB-Mannheim/AustrianNewspapers/wiki/Training-with-Kraken"
+        },
+        {
+          "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/kraken/reichsanzeiger-gt/reichsanzeiger_best.mlmodel",
+          "size": 16358636,
+          "name": "reichsanzeiger.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "19th and 20th century German Fraktur ('Deutscher Reichsanzeiger'); https://github.com/UB-Mannheim/reichsanzeiger-gt/wiki/Training-with-Kraken"
+        },
+        {
+          "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/kraken/digitue-gt/digitue_best.mlmodel",
+          "size": 16364343,
+          "name": "digitue.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "mostly 19th century German Fraktur; https://github.com/UB-Mannheim/digitue-gt/wiki/Training-with-Kraken"
+        },
+        {
+          "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/kraken/digi-gt/luther_best.mlmodel",
+          "size": 16305851,
+          "name": "luther.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "16th century German Gothic; https://github.com/UB-Mannheim/digi-gt/wiki/Training"
+        },
+        {
+          "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/kraken/typewriter/typewriter.mlmodel",
+          "size": 16364780,
+          "name": "typewriter.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "20th century typewriter http://idb.ub.uni-tuebingen.de/opendigi/walz_1976, pretrained on austriannewspapers.mlmodel"
+        },
+        {
+          "url": "https://zenodo.org/record/2577813/files/en_best.mlmodel?download=1",
+          "size": 2930723,
+          "name": "en_best.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "This model has been trained on a large corpus of modern printed English text augmented with ~10000 lines of historical pages"
+        }
+      ]
     }
-
   }
 }
