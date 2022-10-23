@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.3.0] - 2022-10-23
+
 Fixed:
 
   * recognize: clip bounding boxes to canvas
