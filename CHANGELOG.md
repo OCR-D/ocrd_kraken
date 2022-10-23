@@ -5,6 +5,16 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * recognize: clip bounding boxes to canvas
+  * Updated README to reflect current capabilities
+  * Docker build working and with proper tagging
+
+Added:
+
+  * `resources` in `ocrd-tool.json` for the OCR-D resource manager
+
 ## [0.2.0] - 2022-07-18
 
 Added:
