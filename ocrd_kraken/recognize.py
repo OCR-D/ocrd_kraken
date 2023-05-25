@@ -1,5 +1,6 @@
 import regex
 from os.path import join
+import numpy as np
 from ocrd import Processor
 from ocrd_utils import (
     getLogger,
@@ -96,6 +97,10 @@ class KrakenRecognize(Processor):
                     idx_word += 1
                     poly_word = [point for cut in cuts_word for point in cut]
                     bbox_word = bbox_from_polygon(coordinates_for_segment(poly_word, None, page_coords))
+                    # avoid zero-size coords on ties
+                    bbox_word = np.array(bbox_word, dtype=int)
+                    if np.prod(bbox_word[2:4] - bbox_word[0:2]) == 0:
+                        bbox_word[2:4] += 1
                     if len(confidences_word) > 0:
                         conf_word = sum(confidences_word) / len(confidences_word)
                     else:
@@ -107,6 +112,10 @@ class KrakenRecognize(Processor):
                         id_glyph = '%s_glyph_%s' % (id_word, idx_glyph + 1)
                         poly_glyph = cuts_word[idx_glyph]
                         bbox_glyph = bbox_from_polygon(coordinates_for_segment(poly_glyph, None, page_coords))
+                        # avoid zero-size coords on ties
+                        bbox_glyph = np.array(bbox_glyph, dtype=int)
+                        if np.prod(bbox_glyph[2:4] - bbox_glyph[0:2]) == 0:
+                            bbox_glyph[2:4] += 1
                         conf_glyph = confidences_word[idx_glyph]
                         glyph = GlyphType(id=id_glyph,
                                           Coords=CoordsType(points=points_from_bbox(*bbox_glyph)))
