@@ -1,5 +1,6 @@
-from ocrd import Processor
+import regex
 from os.path import join
+from ocrd import Processor
 from ocrd_utils import (
     getLogger,
     make_file_id,
@@ -73,43 +74,46 @@ class KrakenRecognize(Processor):
                 bbox = (max(xmin, 0), max(ymin, 0), min(page_image.width, xmax), min(page_image.height, ymax))
                 bounds['boxes'].append(bbox)
 
-            idx_line = 0
-            def _make_word(id_line, idx_word):
-                word = WordType(id='%s_word_%s' % (id_line, idx_word),
-                        Coords=CoordsType(points=''))
-                word.add_TextEquiv(TextEquivType(Unicode=''))
-                return word
-            for ocr_record in self.predict(page_image, bounds):
+            for idx_line, ocr_record in enumerate(self.predict(page_image, bounds)):
+                line = all_lines[idx_line]
+                id_line = line.id
+                text_line = ocr_record.prediction
+                if len(ocr_record.confidences) > 0:
+                    conf_line = sum(ocr_record.confidences) / len(ocr_record.confidences)
+                else:
+                    conf_line = None
+                line.add_TextEquiv(TextEquivType(Unicode=text_line, conf=conf_line))
                 idx_word = 0
-                current_word = _make_word(all_lines[idx_line].id, idx_word)
-                idx_glyph = 0
-                for text, poly, conf in ocr_record:
-                    poly = coordinates_for_segment(poly, None, page_coords)
-                    if text == ' ':
-                        if idx_glyph == 0:
-                            continue
-                        idx_glyph = 0
-                        idx_word += 1
-                        all_lines[idx_line].add_Word(current_word)
-                        current_word.get_Coords().points = points_from_bbox(*bbox_from_polygon(polygon_from_points(current_word.get_Coords().points.strip())))
-                        current_word = _make_word(all_lines[idx_line].id, idx_word)
+                line_offset = 0
+                for text_word in regex.splititer(r'(\s+)', text_line):
+                    next_offset = line_offset + len(text_word)
+                    cuts_word = ocr_record.cuts[line_offset:next_offset]
+                    confidences_word = ocr_record.confidences[line_offset:next_offset]
+                    line_offset = next_offset
+                    if len(text_word.strip()) == 0:
+                        continue
+                    id_word = '%s_word_%s' % (id_line, idx_word + 1)
+                    idx_word += 1
+                    poly_word = [point for cut in cuts_word for point in cut]
+                    bbox_word = bbox_from_polygon(coordinates_for_segment(poly_word, None, page_coords))
+                    if len(confidences_word) > 0:
+                        conf_word = sum(confidences_word) / len(confidences_word)
                     else:
-                        idx_glyph += 1
-                        current_word.get_TextEquiv()[0].Unicode += text
-                        current_word.get_Coords().points += ' ' + points_from_polygon(poly)
-                        # TODO word coordinates
-                        glyph = GlyphType(
-                            id='%s_glyph_%s' % (current_word.id, idx_glyph),
-                            Coords=CoordsType(points=points_from_polygon(poly)))
-                        glyph.add_TextEquiv(TextEquivType(Unicode=text, conf=conf))
-                        current_word.add_Glyph(glyph)
-                if idx_glyph > 0:
-                    current_word.get_Coords().points = points_from_bbox(*bbox_from_polygon(polygon_from_points(current_word.get_Coords().points.strip())))
-                    all_lines[idx_line].add_Word(current_word)
-                log.info('Recognized line %s ' % all_lines[idx_line].id)
-                all_lines[idx_line].add_TextEquiv(TextEquivType(
-                    Unicode=ocr_record.prediction))
-                idx_line += 1
+                        conf_word = None
+                    word = WordType(id=id_word,
+                                    Coords=CoordsType(points=points_from_bbox(*bbox_word)))
+                    word.add_TextEquiv(TextEquivType(Unicode=text_word, conf=conf_word))
+                    for idx_glyph, text_glyph in enumerate(text_word):
+                        id_glyph = '%s_glyph_%s' % (id_word, idx_glyph + 1)
+                        poly_glyph = cuts_word[idx_glyph]
+                        bbox_glyph = bbox_from_polygon(coordinates_for_segment(poly_glyph, None, page_coords))
+                        conf_glyph = confidences_word[idx_glyph]
+                        glyph = GlyphType(id=id_glyph,
+                                          Coords=CoordsType(points=points_from_bbox(*bbox_glyph)))
+                        glyph.add_TextEquiv(TextEquivType(Unicode=text_glyph, conf=conf_glyph))
+                        word.add_Glyph(glyph)
+                    line.add_Word(word)
+                log.info('Recognized line %s ' % line.id)
 
             log.info("Finished recognition, serializing")
             file_id = make_file_id(input_file, self.output_file_grp)
