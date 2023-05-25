@@ -118,13 +118,16 @@ class KrakenSegment(Processor):
                     for idx_line, line_dict in enumerate(res['lines']):
                         line_poly = coordinates_for_segment(line_dict['boundary'], None, page_coords)
                         line_baseline = coordinates_for_segment(line_dict['baseline'], None, page_coords)
+                        line_id = 'region_%s_line_%s' % (idx_region + 1, idx_line + 1)
+                        line_type = line_dict.get('tags', {}).get('type', '')
+                        log.info("Line %s is of type %s", line_id, line_type)
                         line_polygon = make_valid(geom.Polygon(line_poly))
                         if region_polygon.contains(line_polygon):
                             if idx_line in handled_lines:
                                 log.error("Line %s was already added to region %s" % (idx_line, handled_lines[idx_line]))
                                 continue
                             region_elem.add_TextLine(TextLineType(
-                                id='region_%s_line_%s' % (idx_region + 1, idx_line + 1),
+                                id=line_id,
                                 Baseline=BaselineType(points=points_from_polygon(line_baseline)),
                                 Coords=CoordsType(points=points_from_polygon(line_poly))))
                             handled_lines[idx_line] = idx_region
