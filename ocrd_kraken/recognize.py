@@ -65,7 +65,7 @@ class KrakenRecognize(Processor):
                 feature_selector="binarized" if self.model.one_channel_mode == '1' else '')
 
             log.info("Converting PAGE to kraken 'bounds' format")
-            bounds = {'boxes': [], 'script_detection': True, 'text_direction': 'horizontal-lr'}
+            bounds = {'boxes': [], 'script_detection': False, 'text_direction': 'horizontal-lr'}
             all_lines = page.get_AllTextLines()
             for line in all_lines:
                 # FIXME: see whether model needs baselines or bbox crops (seg_type)
@@ -78,6 +78,9 @@ class KrakenRecognize(Processor):
             for idx_line, ocr_record in enumerate(self.predict(page_image, bounds)):
                 line = all_lines[idx_line]
                 id_line = line.id
+                if not ocr_record.prediction and not ocr_record.cuts:
+                    log.warning('No results for line "%s"', line.id)
+                    continue
                 text_line = ocr_record.prediction
                 if len(ocr_record.confidences) > 0:
                     conf_line = sum(ocr_record.confidences) / len(ocr_record.confidences)
@@ -128,7 +131,7 @@ class KrakenRecognize(Processor):
                         glyph.add_TextEquiv(TextEquivType(Unicode=text_glyph, conf=conf_glyph))
                         word.add_Glyph(glyph)
                     line.add_Word(word)
-                log.info('Recognized line %s ' % line.id)
+                log.info('Recognized line "%s"', line.id)
 
             log.info("Finished recognition, serializing")
             file_id = make_file_id(input_file, self.output_file_grp)
