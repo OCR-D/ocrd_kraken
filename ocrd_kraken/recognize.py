@@ -89,6 +89,12 @@ class KrakenRecognize(Processor):
                 for text_word in regex.splititer(r'(\s+)', text_line):
                     next_offset = line_offset + len(text_word)
                     cuts_word = ocr_record.cuts[line_offset:next_offset]
+                    # fixme: kraken#98 says the Pytorch CTC output is too impoverished to yield good glyph stops
+                    # as a workaround, here we just steal from the next glyph start, respectively:
+                    if len(ocr_record.cuts) > next_offset + 1:
+                        cuts_word.extend(ocr_record.cuts[next_offset:next_offset+1])
+                    else:
+                        cuts_word.append([ocr_record.line[-1]])
                     confidences_word = ocr_record.confidences[line_offset:next_offset]
                     line_offset = next_offset
                     if len(text_word.strip()) == 0:
@@ -110,7 +116,7 @@ class KrakenRecognize(Processor):
                     word.add_TextEquiv(TextEquivType(Unicode=text_word, conf=conf_word))
                     for idx_glyph, text_glyph in enumerate(text_word):
                         id_glyph = '%s_glyph_%s' % (id_word, idx_glyph + 1)
-                        poly_glyph = cuts_word[idx_glyph]
+                        poly_glyph = cuts_word[idx_glyph] + cuts_word[idx_glyph + 1]
                         bbox_glyph = bbox_from_polygon(coordinates_for_segment(poly_glyph, None, page_coords))
                         # avoid zero-size coords on ties
                         bbox_glyph = np.array(bbox_glyph, dtype=int)
