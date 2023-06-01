@@ -13,6 +13,7 @@ from ocrd_utils import (
     points_from_bbox,
     polygon_from_points,
     bbox_from_points,
+    transform_coordinates,
     MIMETYPE_PAGE,
 )
 from ocrd_modelfactory import page_from_file
@@ -64,16 +65,27 @@ class KrakenRecognize(Processor):
                 page, page_id,
                 feature_selector="binarized" if self.model.one_channel_mode == '1' else '')
 
-            log.info("Converting PAGE to kraken 'bounds' format")
-            bounds = {'boxes': [], 'script_detection': False, 'text_direction': 'horizontal-lr'}
             all_lines = page.get_AllTextLines()
+            # assumes that missing baselines are rare, if any
+            if any(line.Baseline for line in all_lines):
+                log.info("Converting PAGE to kraken 'bounds' format (baselines)")
+                bounds = {'lines': [], 'script_detection': False, 'text_direction': 'horizontal-lr', 'type': 'baselines'}
+            else:
+                log.info("Converting PAGE to kraken 'bounds' format (boxes only)")
+                bounds = {'boxes': [], 'script_detection': False, 'text_direction': 'horizontal-lr'}
             for line in all_lines:
-                # FIXME: see whether model needs baselines or bbox crops (seg_type)
-                # FIXME: if we have baselines, pass 'lines' (baseline+boundary) instead of 'boxes'
+                # FIXME: see whether model prefers baselines or bbox crops (seg_type)
+                # FIXME: even if we do not have baselines, emulating baseline+boundary might be useful to prevent automatic center normalization
                 poly = coordinates_of_segment(line, None, page_coords)
-                xmin, ymin, xmax, ymax = bbox_from_polygon(poly)
-                bbox = (max(xmin, 0), max(ymin, 0), min(page_image.width, xmax), min(page_image.height, ymax))
-                bounds['boxes'].append(bbox)
+                if bounds.get('type', '') == 'baselines':
+                    base = baseline_of_segment(line, page_coords)
+                    bounds['lines'].append({'baseline': list(map(tuple, base)),
+                                            'boundary': list(map(tuple, poly)),
+                                            'tags': {'type': ''}})
+                else:
+                    xmin, ymin, xmax, ymax = bbox_from_polygon(poly)
+                    bbox = (max(xmin, 0), max(ymin, 0), min(page_image.width, xmax), min(page_image.height, ymax))
+                    bounds['boxes'].append(bbox)
 
             for idx_line, ocr_record in enumerate(self.predict(page_image, bounds)):
                 line = all_lines[idx_line]
@@ -91,13 +103,13 @@ class KrakenRecognize(Processor):
                 line_offset = 0
                 for text_word in regex.splititer(r'(\s+)', text_line):
                     next_offset = line_offset + len(text_word)
-                    cuts_word = ocr_record.cuts[line_offset:next_offset]
+                    cuts_word = list(map(tuple, ocr_record.cuts[line_offset:next_offset]))
                     # fixme: kraken#98 says the Pytorch CTC output is too impoverished to yield good glyph stops
                     # as a workaround, here we just steal from the next glyph start, respectively:
                     if len(ocr_record.cuts) > next_offset + 1:
-                        cuts_word.extend(ocr_record.cuts[next_offset:next_offset+1])
+                        cuts_word.extend(list(map(tuple, ocr_record.cuts[next_offset:next_offset+1])))
                     else:
-                        cuts_word.append([ocr_record.line[-1]])
+                        cuts_word.append((ocr_record.line[-1],))
                     confidences_word = ocr_record.confidences[line_offset:next_offset]
                     line_offset = next_offset
                     if len(text_word.strip()) == 0:
@@ -143,3 +155,15 @@ class KrakenRecognize(Processor):
                 mimetype=MIMETYPE_PAGE,
                 local_filename=join(self.output_file_grp, f'{file_id}.xml'),
                 content=to_xml(pcgts))
+
+# zzz should go into core ocrd_utils
+def baseline_of_segment(segment, coords):
+    line = segment.get_Baseline()
+    if line is None:
+        poly = coordinates_of_segment(segment, None, coords)
+        xmin, ymin, xmax, ymax = bbox_from_polygon(poly)
+        ymid = ymin + 0.2 * (ymax - ymin)
+        return [[xmin, ymid], [xmax, ymid]]
+    line = np.array(polygon_from_points(line.points))
+    line = transform_coordinates(line, coords['transform'])
+    return np.round(line).astype(np.int32)
