@@ -99,7 +99,7 @@
       },
       "resources": [
         {
-          "url": "https://github.com/mittagessen/kraken/raw/master/kraken/blla.mlmodel",
+          "url": "https://github.com/mittagessen/kraken/raw/main/kraken/blla.mlmodel",
           "size": 5047020,
           "name": "blla.mlmodel",
           "parameter_usage": "without-extension",
