@@ -5,6 +5,19 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * recognize: iterate line results via proper word splitting
+  * recognize: add proper line and word confidences
+  * recognize: avoid invalid polygons on single-glyph words
+  * recognize: workaround for better quality box cuts
+  * recognize: workaround for empty/failed line records
+  * segment: update blla.model URL (master→main)
+
+Changed:
+
+  * recognize: pass lines in baseline format if any baselines are annotated
+
 ## [0.3.0] - 2022-10-23
 
 Fixed:
