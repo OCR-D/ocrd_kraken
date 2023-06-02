@@ -38,7 +38,7 @@ deps:
 
 deps-ubuntu:
 	apt-get update
-	apt-get -y install scons libprotobuf-dev protobuf-compiler libpng-dev libeigen3-dev swig
+	apt-get -y install libprotobuf-dev protobuf-compiler libpng-dev libeigen3-dev
 
 # Install testing deps via pip
 deps-test:
