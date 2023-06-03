@@ -7,6 +7,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Fixed:
 
+  * recognize: project text results to region level in order
   * recognize: iterate line results via proper word splitting
   * recognize: add proper line and word confidences
   * recognize: avoid invalid polygons on single-glyph words
@@ -17,6 +18,7 @@ Fixed:
 Changed:
 
   * recognize: pass lines in baseline format if any baselines are annotated
+  * recognize: ensure baselines are valid and consistent with line polygon
 
 ## [0.3.0] - 2022-10-23
 
