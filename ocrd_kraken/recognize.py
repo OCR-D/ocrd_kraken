@@ -78,7 +78,12 @@ class KrakenRecognize(Processor):
                 # FIXME: even if we do not have baselines, emulating baseline+boundary might be useful to prevent automatic center normalization
                 poly = coordinates_of_segment(line, None, page_coords)
                 if bounds.get('type', '') == 'baselines':
-                    base = baseline_of_segment(line, page_coords)
+                    if line.Baseline is None:
+                        base = dummy_baseline_of_segment(line, page_coords)
+                    else:
+                        base = baseline_of_segment(line, page_coords)
+                        if len(base) < 2 or np.abs(np.mean(base[0] - base[-1])) <= 1:
+                            base = dummy_baseline_of_segment(line, page_coords)
                     bounds['lines'].append({'baseline': list(map(tuple, base)),
                                             'boundary': list(map(tuple, poly)),
                                             'tags': {'type': ''}})
@@ -158,12 +163,12 @@ class KrakenRecognize(Processor):
 
 # zzz should go into core ocrd_utils
 def baseline_of_segment(segment, coords):
-    line = segment.get_Baseline()
-    if line is None:
-        poly = coordinates_of_segment(segment, None, coords)
-        xmin, ymin, xmax, ymax = bbox_from_polygon(poly)
-        ymid = ymin + 0.2 * (ymax - ymin)
-        return [[xmin, ymid], [xmax, ymid]]
-    line = np.array(polygon_from_points(line.points))
+    line = np.array(polygon_from_points(segment.Baseline.points))
     line = transform_coordinates(line, coords['transform'])
     return np.round(line).astype(np.int32)
+
+def dummy_baseline_of_segment(segment, coords, yrel=0.2):
+    poly = coordinates_of_segment(segment, None, coords)
+    xmin, ymin, xmax, ymax = bbox_from_polygon(poly)
+    ymid = ymin + yrel * (ymax - ymin)
+    return [[xmin, ymid], [xmax, ymid]]
