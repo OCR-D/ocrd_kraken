@@ -1,6 +1,10 @@
-import regex
 from os.path import join
+import regex
+import itertools
 import numpy as np
+from scipy.sparse.csgraph import minimum_spanning_tree
+from shapely.geometry import Polygon, LineString, box as Rectangle
+from shapely.ops import unary_union, nearest_points
 from ocrd import Processor
 from ocrd_utils import (
     getLogger,
@@ -12,12 +16,20 @@ from ocrd_utils import (
     points_from_polygon,
     points_from_bbox,
     polygon_from_points,
+    xywh_from_points,
     bbox_from_points,
     transform_coordinates,
     MIMETYPE_PAGE,
 )
 from ocrd_modelfactory import page_from_file
-from ocrd_models.ocrd_page import TextEquivType, WordType, GlyphType, CoordsType, to_xml
+from ocrd_models.ocrd_page import (
+    BaselineType,
+    TextEquivType,
+    WordType,
+    GlyphType,
+    CoordsType,
+    to_xml
+)
 
 from ocrd_kraken.config import OCRD_TOOL
 
@@ -62,8 +74,8 @@ class KrakenRecognize(Processor):
             self.add_metadata(pcgts)
             page = pcgts.get_Page()
             page_image, page_coords, _ = self.workspace.image_from_page(
-                page, page_id,
                 feature_selector="binarized" if self.model.one_channel_mode == '1' else '')
+            page_rect = Rectangle(0, 0, page_image.width - 1, page_image.height - 1)
 
             all_lines = page.get_AllTextLines()
             # assumes that missing baselines are rare, if any
@@ -73,10 +85,14 @@ class KrakenRecognize(Processor):
             else:
                 log.info("Converting PAGE to kraken 'bounds' format (boxes only)")
                 bounds = {'boxes': [], 'script_detection': False, 'text_direction': 'horizontal-lr'}
+            scale = 0.5 * np.median([xywh_from_points(line.Coords.points)['h'] for line in all_lines])
+            log.info("Estimated scale: %.1f", scale)
             for line in all_lines:
                 # FIXME: see whether model prefers baselines or bbox crops (seg_type)
                 # FIXME: even if we do not have baselines, emulating baseline+boundary might be useful to prevent automatic center normalization
                 poly = coordinates_of_segment(line, None, page_coords)
+                poly = make_valid(Polygon(poly))
+                poly = poly.intersection(page_rect)
                 if bounds.get('type', '') == 'baselines':
                     if line.Baseline is None:
                         base = dummy_baseline_of_segment(line, page_coords)
@@ -84,13 +100,23 @@ class KrakenRecognize(Processor):
                         base = baseline_of_segment(line, page_coords)
                         if len(base) < 2 or np.abs(np.mean(base[0] - base[-1])) <= 1:
                             base = dummy_baseline_of_segment(line, page_coords)
-                    bounds['lines'].append({'baseline': list(map(tuple, base)),
-                                            'boundary': list(map(tuple, poly)),
+                        elif not LineString(base).intersects(poly):
+                            base = dummy_baseline_of_segment(line, page_coords)
+                    # kraken expects baseline to be fully contained in boundary
+                    base = LineString(base)
+                    if not base.within(poly):
+                        poly = join_polygons([poly, polygon_from_baseline(base, scale=scale)],
+                                             loc=line.id, scale=scale)
+                    bounds['lines'].append({'baseline': list(map(tuple, base.coords)),
+                                            'boundary': list(map(tuple, poly.exterior.coords)),
                                             'tags': {'type': ''}})
+                    # write back
+                    base = coordinates_for_segment(base.coords, None, page_coords)
+                    line.set_Baseline(BaselineType(points=points_from_polygon(base)))
+                    poly = coordinates_for_segment(poly.exterior.coords[:-1], None, page_coords)
+                    line.set_Coords(CoordsType(points=points_from_polygon(poly)))
                 else:
-                    xmin, ymin, xmax, ymax = bbox_from_polygon(poly)
-                    bbox = (max(xmin, 0), max(ymin, 0), min(page_image.width, xmax), min(page_image.height, ymax))
-                    bounds['boxes'].append(bbox)
+                    bounds['boxes'].append(poly.envelope.bounds)
 
             for idx_line, ocr_record in enumerate(self.predict(page_image, bounds)):
                 line = all_lines[idx_line]
@@ -172,3 +198,66 @@ def dummy_baseline_of_segment(segment, coords, yrel=0.2):
     xmin, ymin, xmax, ymax = bbox_from_polygon(poly)
     ymid = ymin + yrel * (ymax - ymin)
     return [[xmin, ymid], [xmax, ymid]]
+
+# zzz should go into core ocrd_utils
+def polygon_from_baseline(baseline, scale=20):
+    if not isinstance(baseline, LineString):
+        baseline = LineString(baseline)
+    ltr = baseline.coords[0][0] < baseline.coords[-1][0]
+    # left-hand side if left-to-right, and vice versa
+    polygon = make_valid(join_polygons([baseline.buffer(scale * (-1) ** ltr,
+                                                        single_sided=True)],
+                                       scale=scale))
+    return polygon
+
+def join_polygons(polygons, loc='', scale=20):
+    """construct concave hull (alpha shape) from input polygons"""
+    # compoundp = unary_union(polygons)
+    # jointp = compoundp.convex_hull
+    polygons = list(itertools.chain.from_iterable([
+        poly.geoms if poly.geom_type in ['MultiPolygon', 'GeometryCollection']
+        else [poly]
+        for poly in polygons]))
+    npoly = len(polygons)
+    if npoly == 1:
+        return polygons[0]
+    # find min-dist path through all polygons (travelling salesman)
+    pairs = itertools.combinations(range(npoly), 2)
+    dists = np.eye(npoly, dtype=float)
+    for i, j in pairs:
+        dist = polygons[i].distance(polygons[j])
+        if dist == 0:
+            dist = 1e-5 # if pair merely touches, we still need to get an edge
+        dists[i, j] = dist
+        dists[j, i] = dist
+    dists = minimum_spanning_tree(dists, overwrite=True)
+    # add bridge polygons (where necessary)
+    for prevp, nextp in zip(*dists.nonzero()):
+        prevp = polygons[prevp]
+        nextp = polygons[nextp]
+        nearest = nearest_points(prevp, nextp)
+        bridgep = LineString(nearest).buffer(max(1, scale/5), resolution=1)
+        polygons.append(bridgep)
+    jointp = unary_union(polygons)
+    assert jointp.geom_type == 'Polygon', jointp.wkt
+    if jointp.minimum_clearance < 1.0:
+        # follow-up calculations will necessarily be integer;
+        # so anticipate rounding here and then ensure validity
+        jointp = Polygon(np.round(jointp.exterior.coords))
+        jointp = make_valid(jointp)
+    return jointp
+
+def make_valid(polygon):
+    points = list(polygon.exterior.coords)
+    for split in range(1, len(points)):
+        if polygon.is_valid or polygon.simplify(polygon.area).is_valid:
+            break
+        # simplification may not be possible (at all) due to ordering
+        # in that case, try another starting point
+        polygon = Polygon(points[-split:]+points[:-split])
+    for tolerance in range(int(polygon.area)):
+        if polygon.is_valid:
+            break
+        # simplification may require a larger tolerance
+        polygon = polygon.simplify(tolerance + 1)
+    return polygon
