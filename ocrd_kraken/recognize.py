@@ -5,6 +5,8 @@ import numpy as np
 from scipy.sparse.csgraph import minimum_spanning_tree
 from shapely.geometry import Polygon, LineString, box as Rectangle
 from shapely.ops import unary_union, nearest_points
+import torch
+
 from ocrd import Processor
 from ocrd_utils import (
     getLogger,
@@ -62,7 +64,10 @@ class KrakenRecognize(Processor):
         from kraken.lib.models import load_any
         model_fname = self.resolve_resource(self.parameter['model'])
         log.info("loading model '%s'", model_fname)
-        self.model = load_any(model_fname, device=self.parameter['device'])
+        device = self.parameter['device']
+        if device != 'cpu' and not torch.cuda.is_available():
+            device = 'cpu'
+        self.model = load_any(model_fname, device=device)
         def predict(page_image, bounds):
             return rpred(self.model, page_image, bounds,
                          self.parameter['pad'],

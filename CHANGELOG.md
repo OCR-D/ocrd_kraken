@@ -19,6 +19,7 @@ Changed:
 
   * recognize: pass lines in baseline format if any baselines are annotated
   * recognize: ensure baselines are valid and consistent with line polygon
+  * recognize/segment: fall back to CPU if CUDA not available
 
 ## [0.3.0] - 2022-10-23
 

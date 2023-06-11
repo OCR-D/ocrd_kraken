@@ -17,6 +17,7 @@ from ocrd_modelfactory import page_from_file
 
 import shapely.geometry as geom
 from shapely.prepared import prep as geom_prep
+import torch
 
 from .config import OCRD_TOOL
 
@@ -50,7 +51,10 @@ class KrakenSegment(Processor):
             log.info("Using blla segmenter")
             blla_model_fname = self.resolve_resource(self.parameter['blla_model'])
             kwargs['model'] = TorchVGSLModel.load_model(blla_model_fname)
-            kwargs['device'] = self.parameter['device']
+            device = self.parameter['device']
+            if device != 'cpu' and not torch.cuda.is_available():
+                device = 'cpu'
+            kwargs['device'] = device
         def segmenter(img):
             return segment(img, **kwargs)
         self.segmenter = segmenter
