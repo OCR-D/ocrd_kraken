@@ -67,6 +67,8 @@ class KrakenRecognize(Processor):
         device = self.parameter['device']
         if device != 'cpu' and not torch.cuda.is_available():
             device = 'cpu'
+        if device == 'cpu':
+            log.warning("no CUDA device available. Running without GPU will be slow")
         self.model = load_any(model_fname, device=device)
         def predict(page_image, bounds):
             return rpred(self.model, page_image, bounds,
