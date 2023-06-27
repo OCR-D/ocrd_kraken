@@ -92,7 +92,9 @@ class KrakenRecognize(Processor):
             page = pcgts.get_Page()
             page_image, page_coords, _ = self.workspace.image_from_page(
                 page, page_id,
-                feature_selector="binarized" if self.model.one_channel_mode == '1' else '')
+                feature_selector="binarized"
+                if self.model.nn.input[1] == 1 and self.model.one_channel_mode == '1'
+                else '')
             page_rect = Rectangle(0, 0, page_image.width - 1, page_image.height - 1)
 
             all_lines = page.get_AllTextLines()
