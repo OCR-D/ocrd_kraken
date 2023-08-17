@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.3.1] - 2023-08-17
+
 Fixed:
 
   * recognize: only apply `one_channel_mode` (whether to use `binarized` input)  
@@ -80,6 +82,8 @@ Changed:
 Initial release
 
 <!-- link-labels -->
+[0.3.1]: v0.3.1...v0.3.0
+[0.3.0]: v0.3.0...v0.2.0
 [0.2.0]: v0.2.0...v0.1.2
 [0.1.2]: v0.1.2...v0.1.1
 [0.1.1]: v0.1.1...v0.1.0
