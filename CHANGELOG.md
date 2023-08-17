@@ -7,6 +7,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Fixed:
 
+  * recognize: only apply `one_channel_mode` (whether to use `binarized` input)  
+    if the model has only one input channel
   * recognize: project text results to region level in order
   * recognize: iterate line results via proper word splitting
   * recognize: add proper line and word confidences
