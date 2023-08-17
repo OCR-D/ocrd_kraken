@@ -33,7 +33,12 @@ You need to have [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu
 To run with Docker:
 
 
-    docker run -v path/to/workspaces:/data ocrd/kraken ocrd-kraken-recognize ...
+    docker run --rm \
+    -v path/to/workspaces:/data \
+    -v path/to/models:/usr/local/share/ocrd-resources \
+    ocrd/kraken ocrd-kraken-recognize ...
+    # or ocrd-kraken-segment or ocrd-kraken-binarize
+
 
 ### Native, from PyPI
 
@@ -81,7 +86,7 @@ Available [OCR-D processors](https://ocr-d.de/en/spec/cli) are:
 - [ocrd-kraken-segment](ocrd_kraken/segment.py) (all-in-one segmentation – recommended for handwriting and simply layouted prints)  
   - adds `TextRegion`s, `TableRegion`s, `ImageRegion`s, `MathsRegion`s, `NoiseRegion`s, `ReadingOrder` and `AlternativeImage` to `Page` (depending on model training)
   - adds `TextLine`s to `TextRegion`s, including their `Baseline`
-- [ocrd-kraken-recognize](ocrd_kraken/recognize.py)
+- [ocrd-kraken-recognize](ocrd_kraken/recognize.py) (benefits from annotated `Baseline`s, falls back to center-normalized bboxes)
   - adds `Word`s to `TextLine`s
   - adds `Glyph`s to `Word`s
   - adds `TextEquiv`

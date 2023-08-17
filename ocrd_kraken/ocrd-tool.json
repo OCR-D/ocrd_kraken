@@ -87,19 +87,19 @@
                       "noise": "NoiseRegion", "unknown": "UnknownRegion", "custom": "CustomRegion"}
         },
         "device": {
-          "description": "GPU ID or 'cpu' to run on CPU only", 
-          "type": "string", 
-          "default": "cpu"
+          "description": "CUDA ID (e.g. 'cuda:0') for computation on GPU (if available), or 'cpu' to run on CPU only",
+          "type": "string",
+          "default": "cuda:0"
         },
         "use_legacy": {
-          "description": "Use legacy box segmenter as opposed to neural net baseline segmenter", 
-          "type": "boolean", 
+          "description": "Use legacy box segmenter as opposed to neural net baseline segmenter",
+          "type": "boolean",
           "default": false
         }
       },
       "resources": [
         {
-          "url": "https://github.com/mittagessen/kraken/raw/master/kraken/blla.mlmodel",
+          "url": "https://github.com/mittagessen/kraken/raw/main/kraken/blla.mlmodel",
           "size": 5047020,
           "name": "blla.mlmodel",
           "parameter_usage": "without-extension",
@@ -135,9 +135,9 @@
           "default": true
         },
         "device": {
-          "description": "CUDA ID (e.g. 'cuda:0') for computation on GPU, or 'cpu' to run on CPU only",
+          "description": "CUDA ID (e.g. 'cuda:0') for computation on GPU (if available), or 'cpu' to run on CPU only",
           "type": "string",
-          "default": "cpu"
+          "default": "cuda:0"
         }
       },
       "resources": [

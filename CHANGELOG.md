@@ -5,6 +5,24 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * recognize: only apply `one_channel_mode` (whether to use `binarized` input)  
+    if the model has only one input channel
+  * recognize: project text results to region level in order
+  * recognize: iterate line results via proper word splitting
+  * recognize: add proper line and word confidences
+  * recognize: avoid invalid polygons on single-glyph words
+  * recognize: workaround for better quality box cuts
+  * recognize: workaround for empty/failed line records
+  * segment: update blla.model URL (master→main)
+
+Changed:
+
+  * recognize: pass lines in baseline format if any baselines are annotated
+  * recognize: ensure baselines are valid and consistent with line polygon
+  * recognize/segment: fall back to CPU if CUDA not available
+
 ## [0.3.0] - 2022-10-23
 
 Fixed:
