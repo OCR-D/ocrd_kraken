@@ -2,31 +2,9 @@ version: 2
 
 jobs:
 
-  build-python36:
-    docker:
-      - image: python:3.6.15-buster
-    steps:
-      - checkout
-      # workaround for OCR-D/core#923
-      - run: apt-get update && apt-get install -y libgeos-dev
-      - run: make deps-ubuntu deps-test deps install
-      - run: ocrd resmgr download ocrd-kraken-segment blla.mlmodel
-      - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
-      - run: make test
-
-  build-python37:
-    docker:
-      - image: python:3.7.15-buster
-    steps:
-      - checkout
-      - run: make deps-ubuntu deps-test deps install
-      - run: ocrd resmgr download ocrd-kraken-segment blla.mlmodel
-      - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
-      - run: make test
-
   build-python38:
     docker:
-      - image: python:3.8.14-buster
+      - image: python:3.8.17-buster
     steps:
       - checkout
       - run: make deps-ubuntu deps-test deps install
@@ -36,7 +14,7 @@ jobs:
 
   build-python39:
     docker:
-      - image: python:3.9.14-buster
+      - image: python:3.9.17-buster
     steps:
       - checkout
       - run: make deps-ubuntu deps-test deps install
@@ -44,11 +22,34 @@ jobs:
       - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
       - run: make test
 
+  build-python310:
+    docker:
+      - image: python:3.10.12-bullseye
+    steps:
+      - checkout
+      # workaround for OCR-D/core#923
+      - run: apt-get update && apt-get install -y libgeos-dev
+      - run: make deps-ubuntu deps-test deps install
+      - run: ocrd resmgr download ocrd-kraken-segment blla.mlmodel
+      - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
+      - run: make test
+
+  build-python311:
+    docker:
+      - image: python:3.11.4-bullseye
+    steps:
+      - checkout
+      - run: make deps-ubuntu deps-test deps install
+      - run: ocrd resmgr download ocrd-kraken-segment blla.mlmodel
+      - run: ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
+      - run: make test
+
+
 workflows:
   version: 2
   build:
     jobs:
-      - build-python36
-      - build-python37
       - build-python38
       - build-python39
+      - build-python310
+      - build-python311
