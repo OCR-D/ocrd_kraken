@@ -1,8 +1,0 @@
-language: python
-python:
-  - 3.5
-  - 3.6
-install:
-  - make deps deps-test install assets > /dev/null
-script:
-  - make test OCRD_BASEURL="https://github.com/OCR-D/ocrd-assets/raw/master/data/"
