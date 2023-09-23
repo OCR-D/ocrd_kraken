@@ -69,7 +69,7 @@ test: tests/assets
 # Clone OCR-D/assets to ./repo/assets
 repo/assets:
 	mkdir -p $(dir $@)
-	git clone https://github.com/OCR-D/assets "$@"
+	git clone --quiet https://github.com/OCR-D/assets "$@"
 
 
 # Setup test assets
