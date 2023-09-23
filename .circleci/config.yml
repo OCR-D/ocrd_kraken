@@ -51,3 +51,5 @@ workflows:
     jobs:
       - build-python38
       - build-python39
+      - build-python310
+      - build-python311
