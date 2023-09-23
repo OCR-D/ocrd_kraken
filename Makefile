@@ -75,6 +75,6 @@ repo/assets:
 # Setup test assets
 tests/assets: repo/assets
 	mkdir -p tests/assets
-	cp -r -t tests/assets repo/assets/data/*
+	cp -a repo/assets/data/* tests/assets
 
 .PHONY: docker install install-dev deps deps-ubuntu deps-test test help
