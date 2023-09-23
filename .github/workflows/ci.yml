@@ -1,0 +1,48 @@
+# Continuous integration for ocrd_kraken
+
+name: CI
+
+on:
+  push:
+
+jobs:
+  ci_test:
+    name: CI build and test
+    # kraken code aborts on GitHub runner ubuntu-latest:
+    #
+    # terminate called after throwing an instance of 'std::runtime_error'
+    #  what():  random_device could not be read
+    #
+    # Related issue: https://github.com/actions/runner-images/issues/672.
+    # runs-on: ubuntu-latest
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.9, '3.10', '3.11']
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          if test $(uname -s) = 'Linux'; then
+            sudo make deps-ubuntu
+          fi
+      - name: Build
+        run: |
+          python3 --version
+          python3 -m venv venv
+          source venv/bin/activate
+          make deps deps-test
+          make install
+          pip check
+          ocrd resmgr download ocrd-kraken-segment blla.mlmodel
+          ocrd resmgr download ocrd-kraken-recognize en_best.mlmodel
+      - name: Test
+        run: |
+          source venv/bin/activate
+          make test
