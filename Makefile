@@ -17,6 +17,7 @@ help:
 	@echo ""
 	@echo "    deps         Install python deps via pip"
 	@echo "    deps-test    Install testing deps via pip"
+	@echo "    deps-ubuntu  Install required packages for Debian/Ubuntu"
 	@echo "    install      Install"
 	@echo "    install-dev  Install in editable mode"
 	@echo "    docker       Build Docker image"
@@ -37,8 +38,10 @@ deps:
 	$(PIP) install -r requirements.txt
 
 deps-ubuntu:
+ifeq ($(shell type -p apt-get), /usr/bin/apt-get)
 	apt-get update
 	apt-get -y install libprotobuf-dev protobuf-compiler libpng-dev libeigen3-dev
+endif
 
 # Install testing deps via pip
 deps-test:
