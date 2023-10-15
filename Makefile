@@ -69,10 +69,14 @@ test: tests/assets
 # Assets
 #
 
-# Clone OCR-D/assets to ./repo/assets
-repo/assets:
-	mkdir -p $(dir $@)
-	git clone --quiet https://github.com/OCR-D/assets "$@"
+# Update OCR-D/assets submodule
+.PHONY: repos always-update tests/assets
+repo/assets: always-update
+	git submodule sync --recursive $@
+	if git submodule status --recursive $@ | grep -qv '^ '; then \
+		git submodule update --init --recursive $@ && \
+		touch $@; \
+	fi
 
 
 # Setup test assets
