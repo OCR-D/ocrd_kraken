@@ -17,6 +17,7 @@ help:
 	@echo ""
 	@echo "    deps         Install python deps via pip"
 	@echo "    deps-test    Install testing deps via pip"
+	@echo "    deps-ubuntu  Install required packages for Debian/Ubuntu"
 	@echo "    install      Install"
 	@echo "    install-dev  Install in editable mode"
 	@echo "    docker       Build Docker image"
@@ -37,8 +38,10 @@ deps:
 	$(PIP) install -r requirements.txt
 
 deps-ubuntu:
+ifeq ($(shell type -p apt-get), /usr/bin/apt-get)
 	apt-get update
 	apt-get -y install libprotobuf-dev protobuf-compiler libpng-dev libeigen3-dev
+endif
 
 # Install testing deps via pip
 deps-test:
@@ -69,12 +72,12 @@ test: tests/assets
 # Clone OCR-D/assets to ./repo/assets
 repo/assets:
 	mkdir -p $(dir $@)
-	git clone https://github.com/OCR-D/assets "$@"
+	git clone --quiet https://github.com/OCR-D/assets "$@"
 
 
 # Setup test assets
 tests/assets: repo/assets
 	mkdir -p tests/assets
-	cp -r -t tests/assets repo/assets/data/*
+	cp -a repo/assets/data/* tests/assets
 
 .PHONY: docker install install-dev deps deps-ubuntu deps-test test help
