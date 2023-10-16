@@ -21,7 +21,8 @@ def workspace(tmpdir):
         shutil.rmtree(tmpdir)
     workspace = Resolver().workspace_from_url(
         assets.path_to('kant_aufklaerung_1784/data/mets.xml'),
-        dst_dir=tmpdir
+        dst_dir=tmpdir,
+        download=True
     )
     return workspace
 

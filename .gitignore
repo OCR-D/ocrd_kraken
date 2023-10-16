@@ -105,6 +105,5 @@ ENV/
 *.swp
 .pytest_cache
 tests/assets
-repo
 .pynative
 _*.png
