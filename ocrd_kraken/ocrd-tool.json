@@ -113,8 +113,13 @@
       "output_file_grp": ["OCR-D-OCR-KRAK"],
       "categories": ["Text recognition and optimization"],
       "steps": ["recognition/text-recognition"],
-      "description": "OCR with kraken",
+      "description": "Text recognition with Kraken",
       "parameters": {
+        "overwrite_text": {
+          "description": "remove any existing TextEquiv", 
+          "type": "boolean", 
+          "default": false
+        },
         "model": {
           "description": "OCR model to recognize with",
           "type": "string",

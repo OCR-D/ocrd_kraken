@@ -77,8 +77,24 @@ class KrakenRecognize(Processor):
         self.predict = predict
 
     def process(self):
-        """
-        Recognize with kraken
+        """Recognize text on lines with Kraken.
+
+        Open and deserialise each PAGE input file and its respective image,
+        then iterate over the element hierarchy down to the line level.
+
+        Set up Kraken to recognise each text line (via coordinates into
+        the higher-level image, or from the alternative image. If the model
+        has single-channel input with `one_channel_mode=1`, then the image
+        must have been binarised. Rescale and pad the image, then pass it
+        to the recogniser (along with the boundary polygon).
+
+        Create new Word and Glyph elements below the line level.
+        If any text annotation already exists, then remove it - unless
+        `overwrite_text=false`. Then put text results and confidence values
+        into additional TextEquiv at each level, and make the higher levels
+        consistent with that (by concatenation joined by whitespace).
+
+        Produce a new output file by serialising the resulting hierarchy.
         """
         log = getLogger('processor.KrakenRecognize')
         assert_file_grp_cardinality(self.input_file_grp, 1)
@@ -149,6 +165,8 @@ class KrakenRecognize(Processor):
                     conf_line = sum(ocr_record.confidences) / len(ocr_record.confidences)
                 else:
                     conf_line = None
+                if self.parameter['overwrite_text']:
+                    line.TextEquiv = []
                 line.add_TextEquiv(TextEquivType(Unicode=text_line, conf=conf_line))
                 idx_word = 0
                 line_offset = 0
