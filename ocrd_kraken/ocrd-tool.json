@@ -1,6 +1,6 @@
 {
   "git_url": "https://github.com/OCR-D/ocrd_kraken",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "tools": {
     "ocrd-kraken-binarize": {
       "executable": "ocrd-kraken-binarize",
@@ -15,10 +15,10 @@
       "description": "Binarize images with kraken",
       "parameters": {
         "level-of-operation": {
-          "description": "level-of-operation",
+          "description": "segment hierarchy level to operate on",
           "type": "string",
           "default": "page",
-          "enum": ["page", "block", "line"]
+          "enum": ["page", "region", "line"]
         }
       }
     },
@@ -30,10 +30,22 @@
         "Layout analysis"
       ],
       "steps": [
-        "layout/segmentation/region"
+        "layout/segmentation/region",
+        "layout/segmentation/line"
       ],
-      "description": "Block segmentation with kraken",
+      "description": "Layout segmentation with Kraken",
       "parameters": {
+        "level-of-operation": {
+          "description": "segment hierarchy level to operate on (page into regions+lines, or regions into lines)",
+          "type": "string",
+          "default": "page",
+          "enum": ["page", "table", "region"]
+        },
+        "overwrite_segments": {
+          "description": "remove any existing regions/lines", 
+          "type": "boolean", 
+          "default": false
+        },
         "text_direction": {
           "type": "string", 
           "description": "Sets principal text direction", 
@@ -103,7 +115,14 @@
           "size": 5047020,
           "name": "blla.mlmodel",
           "parameter_usage": "without-extension",
-          "description": "Pretrained baseline segmentation model"
+          "description": "Pretrained region+baseline segmentation model (trained on handwriting)"
+        },
+        {
+          "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/kraken/ubma_segmentation/ubma_segmentation.mlmodel",
+          "size": 5047020,
+          "name": "ubma_segmentation.mlmodel",
+          "parameter_usage": "without-extension",
+          "description": "region+baseline segmentation model trained by UBMA (on print)"
         }
       ]
     },
@@ -113,8 +132,13 @@
       "output_file_grp": ["OCR-D-OCR-KRAK"],
       "categories": ["Text recognition and optimization"],
       "steps": ["recognition/text-recognition"],
-      "description": "OCR with kraken",
+      "description": "Text recognition with Kraken",
       "parameters": {
+        "overwrite_text": {
+          "description": "remove any existing TextEquiv", 
+          "type": "boolean", 
+          "default": false
+        },
         "model": {
           "description": "OCR model to recognize with",
           "type": "string",

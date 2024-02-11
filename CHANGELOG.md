@@ -5,6 +5,24 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.4.0] - 2024-02-11
+
+Fixed:
+
+  * binarize: OCR-D conformity (PAGE output, AlternativeImage input/output)
+  * docstrings
+  
+Added:
+
+  * recognize: param `overwrite_text`
+  * segment: param `overwrite_segments`
+  * segment: param `level-of-operation` (now supports `table` and `region`, too)
+
+Changed:
+
+  * binarize: :fire: renamed `level-of-operation=block` to `region`
+  * segment: existing segmentation will be masked away (unless `overwrite_segments`)
+
 ## [0.3.1] - 2023-08-17
 
 Fixed:

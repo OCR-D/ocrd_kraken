@@ -41,7 +41,7 @@ def test_binarize_regions(workspace):
         workspace,
         input_file_grp="OCR-D-GT-PAGE",
         output_file_grp="OCR-D-IMG-BIN-KRAKEN",
-        parameter={'level-of-operation': 'block'}
+        parameter={'level-of-operation': 'region'}
     )
     proc.process()
     workspace.save_mets()

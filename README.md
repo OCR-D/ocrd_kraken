@@ -83,13 +83,14 @@ Available [OCR-D processors](https://ocr-d.de/en/spec/cli) are:
 
 - [ocrd-kraken-binarize](ocrd_kraken/binarize.py) (nlbin – not recommended)  
   - adds `AlternativeImage` files (per page, region or line) to the output fileGrp
-- [ocrd-kraken-segment](ocrd_kraken/segment.py) (all-in-one segmentation – recommended for handwriting and simply layouted prints)  
-  - adds `TextRegion`s, `TableRegion`s, `ImageRegion`s, `MathsRegion`s, `NoiseRegion`s, `ReadingOrder` and `AlternativeImage` to `Page` (depending on model training)
-  - adds `TextLine`s to `TextRegion`s, including their `Baseline`
+- [ocrd-kraken-segment](ocrd_kraken/segment.py) (all-in-one segmentation – recommended for handwriting and simply layouted prints, or as pure line segmentation)  
+  - adds `TextRegion`s to `Page` (if `level-of-operation=page`) or `TableRegion`s (if `table`)
+  - adds `TextLine`s (with `Baseline`) to `TextRegion`s (for all `level-of-operation`)
+  - masks existing segments during detection (unless `overwrite_segments`)
 - [ocrd-kraken-recognize](ocrd_kraken/recognize.py) (benefits from annotated `Baseline`s, falls back to center-normalized bboxes)
   - adds `Word`s to `TextLine`s
   - adds `Glyph`s to `Word`s
-  - adds `TextEquiv`
+  - adds `TextEquiv` (removing existing `TextEquiv` if `overwrite_text`)
 
 ## Testing
 
