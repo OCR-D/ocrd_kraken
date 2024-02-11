@@ -20,6 +20,7 @@ Added:
 
 Changed:
 
+  * binarize: :fire: renamed `level-of-operation=block` to `region`
   * segment: existing segmentation will be masked away (unless `overwrite_segments`)
 
 ## [0.3.1] - 2023-08-17
