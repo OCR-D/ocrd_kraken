@@ -5,13 +5,23 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * recognize: improve baseline/polgon robustness
+
+Changed:
+
+  * segment/recognize: adapt and bump to Kraken v5
+  * adapt to Python importlib instead of pkg_resources
+  * update tests/CI
+
 ## [0.4.0] - 2024-02-11
 
 Fixed:
 
   * binarize: OCR-D conformity (PAGE output, AlternativeImage input/output)
   * docstrings
-  
+
 Added:
 
   * recognize: param `overwrite_text`
@@ -27,7 +37,7 @@ Changed:
 
 Fixed:
 
-  * recognize: only apply `one_channel_mode` (whether to use `binarized` input)  
+  * recognize: only apply `one_channel_mode` (whether to use `binarized` input)
     if the model has only one input channel
   * recognize: project text results to region level in order
   * recognize: iterate line results via proper word splitting
