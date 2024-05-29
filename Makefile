@@ -20,6 +20,7 @@ help:
 	@echo "    deps-ubuntu  Install required packages for Debian/Ubuntu"
 	@echo "    install      Install"
 	@echo "    install-dev  Install in editable mode"
+	@echo "    build        Build source and binary distribution"
 	@echo "    docker       Build Docker image"
 	@echo "    test         Run test"
 	@echo "    repo/assets  Clone OCR-D/assets to ./repo/assets"
@@ -53,6 +54,10 @@ install:
 
 install-dev:
 	$(PIP) install -e .
+
+build:
+	$(PIP) install build
+	$(PYTHON) -m build .
 
 # Build docker image
 docker:
