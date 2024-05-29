@@ -5,7 +5,6 @@ import numpy as np
 from scipy.sparse.csgraph import minimum_spanning_tree
 from shapely.geometry import Polygon, LineString, box as Rectangle
 from shapely.ops import unary_union, nearest_points
-import torch
 
 from ocrd import Processor
 from ocrd_utils import (
@@ -60,6 +59,7 @@ class KrakenRecognize(Processor):
         Load models
         """
         log = getLogger('processor.KrakenRecognize')
+        import torch
         from kraken.rpred import rpred
         from kraken.lib.models import load_any
         model_fname = self.resolve_resource(self.parameter['model'])
