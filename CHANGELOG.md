@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.4.1] - 2024-05-29
+
 Fixed:
 
   * recognize: improve baseline/polgon robustness
@@ -110,6 +112,8 @@ Changed:
 Initial release
 
 <!-- link-labels -->
+[0.4.1]: v0.4.1...v0.4.0
+[0.4.0]: v0.4.0...v0.3.1
 [0.3.1]: v0.3.1...v0.3.0
 [0.3.0]: v0.3.0...v0.2.0
 [0.2.0]: v0.2.0...v0.1.2
