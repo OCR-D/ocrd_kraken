@@ -1,5 +1,5 @@
-ocrd >= 2.38
-kraken >= 3.0
+ocrd >= 2.65
+kraken >= 5.0
 scipy
 shapely
 

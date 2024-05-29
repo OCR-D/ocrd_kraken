@@ -78,13 +78,13 @@ class KrakenSegment(Processor):
         Open and deserialise PAGE input files and their respective images,
         then iterate over the element hierarchy down to the ``level-of-operation``,
         i.e.:
-        
+
         \b
         - On `page` level and `table` level, detect text regions and lines
           (trying to allocate lines to regions).
         - On `region` level, detect lines only.
 
-        Get the page image from the alternative image or by cropping according to the 
+        Get the page image from the alternative image or by cropping according to the
         layout annotation. If alternative images are present, prefer binarized form
         (if ``use_legacy``) or use the last available alternative image (otherwise).
         Unless at the top level (i.e. a page without border), calculate a mask image for
@@ -202,8 +202,8 @@ class KrakenSegment(Processor):
         if self.use_legacy:
             self.log.debug(res)
             idx_line = 0
-            for idx_line, line_x0y0x1y1 in enumerate(res['boxes']):
-                line_poly = polygon_from_x0y0x1y1(line_x0y0x1y1)
+            for idx_line, line in enumerate(res.lines):
+                line_poly = polygon_from_x0y0x1y1(line.bbox)
                 line_poly = coordinates_for_segment(line_poly, None, page_coords)
                 line_points = points_from_polygon(line_poly)
                 region_elem = TextRegionType(
@@ -215,15 +215,16 @@ class KrakenSegment(Processor):
                 page.add_TextRegion(region_elem)
             self.log.debug("Found %d lines on page %s", idx_line + 1, page.id)
         else:
+            self.log.debug(res)
             handled_lines = {}
-            regions = [(type_, poly)
-                       for type_, polys in res['regions'].items()
-                       for poly in polys]
+            regions = [(type_, region)
+                       for type_ in res.regions
+                       for region in res.regions[type_]]
             idx_region = idx_line = 0
-            for idx_region, (region_type, region_poly) in enumerate(regions):
-                region_poly = coordinates_for_segment(region_poly, None, page_coords)
+            for idx_region, (type_, region) in enumerate(regions):
+                region_poly = coordinates_for_segment(region.boundary, None, page_coords)
                 region_poly = make_valid(geom.Polygon(region_poly))
-                region_type = self.parameter['blla_classes'][region_type]
+                region_type = self.parameter['blla_classes'][type_]
                 region_class = getattr(ocrd_models.ocrd_page, region_type + 'Type')
                 region_elem = region_class(
                         id=f'region_{idx_region + 1}',
@@ -233,11 +234,11 @@ class KrakenSegment(Processor):
                     continue
                 # enlarge to avoid loosing slightly extruding text lines
                 region_poly = geom_prep(region_poly.buffer(20/zoom))
-                for idx_line, line_dict in enumerate(res['lines']):
-                    line_poly = coordinates_for_segment(line_dict['boundary'], None, page_coords)
-                    line_baseline = coordinates_for_segment(line_dict['baseline'], None, page_coords)
+                for idx_line, line in enumerate(res.lines):
+                    line_poly = coordinates_for_segment(line.boundary, None, page_coords)
+                    line_baseline = coordinates_for_segment(line.baseline, None, page_coords)
                     line_id = f'region_{idx_region + 1}_line_{idx_line + 1}'
-                    line_type = line_dict.get('tags', {}).get('type', '')
+                    line_type = line.tags.get('type', '')
                     self.log.info("Line %s is of type %s", line_id, line_type)
                     line_poly = make_valid(geom.Polygon(line_poly))
                     if region_poly.contains(line_poly):
@@ -249,13 +250,13 @@ class KrakenSegment(Processor):
                             Baseline=BaselineType(points=points_from_polygon(line_baseline)),
                             Coords=CoordsType(points=points_from_polygon(line_poly.exterior.coords[:-1]))))
                         handled_lines[idx_line] = idx_region
-            for idx_line, line_dict in enumerate(res['lines']):
+            for idx_line, line in enumerate(res.lines):
                 if idx_line not in handled_lines:
                     self.log.error("Line %s could not be assigned a region, creating a dummy region", idx_line)
-                    line_poly = coordinates_for_segment(line_dict['boundary'], None, page_coords)
-                    line_baseline = coordinates_for_segment(line_dict['baseline'], None, page_coords)
+                    line_poly = coordinates_for_segment(line.boundary, None, page_coords)
+                    line_baseline = coordinates_for_segment(line.baseline, None, page_coords)
                     line_id = f'region_line_{idx_line + 1}_line'
-                    line_type = line_dict.get('tags', {}).get('type', '')
+                    line_type = line.tags.get('type', '')
                     self.log.info("Line %s is of type %s", line_id, line_type)
                     line_poly = make_valid(geom.Polygon(line_poly)).exterior.coords[:-1]
                     region_elem = TextRegionType(
@@ -283,19 +284,19 @@ class KrakenSegment(Processor):
         self.log.debug("Finished segmentation, serializing")
         idx_line = 0
         if self.use_legacy:
-            for idx_line, line_x0y0x1y1 in enumerate(res['boxes']):
-                line_poly = polygon_from_x0y0x1y1(line_x0y0x1y1)
+            for idx_line, line in enumerate(res.lines):
+                line_poly = polygon_from_x0y0x1y1(line.bbox)
                 line_poly = coordinates_for_segment(line_poly, None, page_coords)
                 line_points = points_from_polygon(line_poly)
                 region.add_TextLine(TextLineType(
                     id=f'{region.id}_line_{idx_line + 1}',
                     Coords=CoordsType(points=line_points)))
         else:
-            for idx_line, line_dict in enumerate(res['lines']):
-                line_poly = coordinates_for_segment(line_dict['boundary'], None, page_coords)
-                line_baseline = coordinates_for_segment(line_dict['baseline'], None, page_coords)
+            for idx_line, line in enumerate(res.lines):
+                line_poly = coordinates_for_segment(line.boundary, None, page_coords)
+                line_baseline = coordinates_for_segment(line.baseline, None, page_coords)
                 line_id = f'{region.id}_line_{idx_line + 1}'
-                line_type = line_dict.get('tags', {}).get('type', '')
+                line_type = line.tags.get('type', '')
                 self.log.info("Line %s is of type %s", line_id, line_type)
                 line_poly = geom.Polygon(line_poly)
                 #line_poly = line_poly.intersection(region_poly)

@@ -70,8 +70,8 @@ class KrakenRecognize(Processor):
         if device == 'cpu':
             log.warning("no CUDA device available. Running without GPU will be slow")
         self.model = load_any(model_fname, device=device)
-        def predict(page_image, bounds):
-            return rpred(self.model, page_image, bounds,
+        def predict(page_image, segmentation):
+            return rpred(self.model, page_image, segmentation,
                          self.parameter['pad'],
                          self.parameter['bidi_reordering'])
         self.predict = predict
@@ -96,6 +96,7 @@ class KrakenRecognize(Processor):
 
         Produce a new output file by serialising the resulting hierarchy.
         """
+        from kraken.containers import Segmentation, BaselineLine, BBoxLine
         log = getLogger('processor.KrakenRecognize')
         assert_file_grp_cardinality(self.input_file_grp, 1)
         assert_file_grp_cardinality(self.output_file_grp, 1)
@@ -112,24 +113,26 @@ class KrakenRecognize(Processor):
                 if self.model.nn.input[1] == 1 and self.model.one_channel_mode == '1'
                 else '')
             page_rect = Rectangle(0, 0, page_image.width - 1, page_image.height - 1)
+            # todo: find out whether kraken.lib.xml.XMLPage(...).to_container() is adequate
 
             all_lines = page.get_AllTextLines()
             # assumes that missing baselines are rare, if any
             if any(line.Baseline for line in all_lines):
-                log.info("Converting PAGE to kraken 'bounds' format (baselines)")
-                bounds = {'lines': [], 'script_detection': False, 'text_direction': 'horizontal-lr', 'type': 'baselines'}
+                log.info("Converting PAGE to Kraken Segmentation (baselines)")
+                segtype = 'baselines'
             else:
-                log.info("Converting PAGE to kraken 'bounds' format (boxes only)")
-                bounds = {'boxes': [], 'script_detection': False, 'text_direction': 'horizontal-lr'}
+                log.info("Converting PAGE to Kraken Segmentation (boxes only)")
+                segtype = 'bbox'
             scale = 0.5 * np.median([xywh_from_points(line.Coords.points)['h'] for line in all_lines])
             log.info("Estimated scale: %.1f", scale)
+            seglines = []
             for line in all_lines:
                 # FIXME: see whether model prefers baselines or bbox crops (seg_type)
                 # FIXME: even if we do not have baselines, emulating baseline+boundary might be useful to prevent automatic center normalization
                 poly = coordinates_of_segment(line, None, page_coords)
                 poly = make_valid(Polygon(poly))
                 poly = poly.intersection(page_rect)
-                if bounds.get('type', '') == 'baselines':
+                if segtype == 'baselines':
                     if line.Baseline is None:
                         base = dummy_baseline_of_segment(line, page_coords)
                     else:
@@ -145,18 +148,25 @@ class KrakenRecognize(Processor):
                     elif not base.within(poly):
                         poly = join_polygons([poly, polygon_from_baseline(base, scale=scale)],
                                              loc=line.id, scale=scale)
-                    bounds['lines'].append({'baseline': list(map(tuple, base.coords)),
-                                            'boundary': list(map(tuple, poly.exterior.coords)),
-                                            'tags': {'type': ''}})
+                    seglines.append(BaselineLine(baseline=list(map(tuple, base.coords)),
+                                                 boundary=list(map(tuple, poly.exterior.coords)),
+                                                 id=line.id,
+                                                 tags={'type': 'default'}))
                     # write back
                     base = coordinates_for_segment(base.coords, None, page_coords)
                     line.set_Baseline(BaselineType(points=points_from_polygon(base)))
                     poly = coordinates_for_segment(poly.exterior.coords[:-1], None, page_coords)
                     line.set_Coords(CoordsType(points=points_from_polygon(poly)))
                 else:
-                    bounds['boxes'].append(poly.envelope.bounds)
+                    seglines.append(BBoxLine(bbox=poly.envelope.bounds,
+                                             id=line.id))
 
-            for idx_line, ocr_record in enumerate(self.predict(page_image, bounds)):
+            segmentation = Segmentation(lines=seglines,
+                                        script_detection=False,
+                                        text_direction='horizontal-lr',
+                                        type=segtype,
+                                        imagename=page_id)
+            for idx_line, ocr_record in enumerate(self.predict(page_image, segmentation)):
                 line = all_lines[idx_line]
                 id_line = line.id
                 if not ocr_record.prediction and not ocr_record.cuts:
@@ -174,13 +184,13 @@ class KrakenRecognize(Processor):
                 line_offset = 0
                 for text_word in regex.splititer(r'(\s+)', text_line):
                     next_offset = line_offset + len(text_word)
-                    cuts_word = list(map(tuple, ocr_record.cuts[line_offset:next_offset]))
+                    cuts_word = list(map(list, ocr_record.cuts[line_offset:next_offset]))
                     # fixme: kraken#98 says the Pytorch CTC output is too impoverished to yield good glyph stops
                     # as a workaround, here we just steal from the next glyph start, respectively:
                     if len(ocr_record.cuts) > next_offset + 1:
-                        cuts_word.extend(list(map(tuple, ocr_record.cuts[next_offset:next_offset+1])))
+                        cuts_word.extend(list(map(list, ocr_record.cuts[next_offset:next_offset+1])))
                     else:
-                        cuts_word.append((ocr_record.line[-1],))
+                        cuts_word.append(list(ocr_record.cuts[-1]))
                     confidences_word = ocr_record.confidences[line_offset:next_offset]
                     line_offset = next_offset
                     if len(text_word.strip()) == 0:
