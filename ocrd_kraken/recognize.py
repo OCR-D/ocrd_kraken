@@ -140,7 +140,9 @@ class KrakenRecognize(Processor):
                             base = dummy_baseline_of_segment(line, page_coords)
                     # kraken expects baseline to be fully contained in boundary
                     base = LineString(base)
-                    if not base.within(poly):
+                    if poly.is_empty:
+                        poly = polygon_from_baseline(base, scale=scale)
+                    elif not base.within(poly):
                         poly = join_polygons([poly, polygon_from_baseline(base, scale=scale)],
                                              loc=line.id, scale=scale)
                     bounds['lines'].append({'baseline': list(map(tuple, base.coords)),
