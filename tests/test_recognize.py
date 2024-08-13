@@ -20,13 +20,13 @@ class TestKrakenRecognize(TestCase):
         with pushd_popd(tempdir=True) as tempdir:
             workspace = resolver.workspace_from_url(assets.path_to('communist_manifesto/data/mets.xml'), dst_dir=tempdir, download=True)
             workspace.overwrite_mode = True
-            proc = KrakenRecognize(
-                workspace,
-                input_file_grp="OCR-D-SEG-KRAKEN",
-                output_file_grp="OCR-D-OCR-KRAKEN",
+            run_processor(KrakenRecognize,
+                          workspace=workspace,
+                          input_file_grp="OCR-D-SEG-KRAKEN",
+                          output_file_grp="OCR-D-OCR-KRAKEN",
             )
-            proc.process()
             workspace.save_mets()
+            # FIXME: add result assertions (find_files, parsing PAGE etc)
 
 if __name__ == "__main__":
     main(__file__)
