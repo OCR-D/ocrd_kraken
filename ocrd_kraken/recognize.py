@@ -54,10 +54,8 @@ class KrakenRecognize(Processor):
 
     def setup(self):
         """
-        Assert filegrp cardinality, load model, set predict function
+        Load model, set predict function
         """
-        assert_file_grp_cardinality(self.input_file_grp, 1)
-        assert_file_grp_cardinality(self.output_file_grp, 1)
 
         self.logger = getLogger('processor.KrakenRecognize')
         import torch
