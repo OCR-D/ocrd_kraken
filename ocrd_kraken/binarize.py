@@ -17,6 +17,9 @@ class KrakenBinarize(Processor):
     def executable(self):
         return 'ocrd-kraken-binarize'
 
+    def setup(self):
+        self.logger = getLogger('processor.KrakenBinarize')
+    
     def process_page_pcgts(self, *input_pcgts : OcrdPage, output_file_id : Optional[str] = None, page_id : Optional[str] = None) -> OcrdPage:
         """Binarize the pages/regions/lines with Kraken.
 
