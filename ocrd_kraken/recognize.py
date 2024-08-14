@@ -1,5 +1,6 @@
 from os.path import join
-from typing import Union
+from typing import Optional, Union
+from ocrd_models import OcrdProcessResult
 import regex
 import itertools
 import numpy as np
@@ -77,7 +78,7 @@ class KrakenRecognize(Processor):
                          self.parameter['bidi_reordering'])
         self.predict = predict
 
-    def process_page_pcgts(self, *input_pcgts, output_file_id: str = None, page_id: str = None) -> OcrdPage:
+    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdProcessResult:
         """Recognize text on lines with Kraken.
 
         Open the parsed PAGE-XML file, then iterate over the element hierarchy
@@ -223,7 +224,7 @@ class KrakenRecognize(Processor):
             page_update_higher_textequiv_levels('line', pcgts)
 
         self.logger.info("Finished recognition, serializing")
-        return pcgts
+        return OcrdProcessResult(pcgts)
 
 # zzz should go into core ocrd_utils
 def baseline_of_segment(segment, coords):

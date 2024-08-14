@@ -3,6 +3,7 @@ from PIL import ImageOps
 from os.path import join
 
 from ocrd import Processor
+from ocrd_models import OcrdProcessResult
 from ocrd_utils import (
     getLogger,
     assert_file_grp_cardinality,
@@ -72,7 +73,7 @@ class KrakenSegment(Processor):
             return segment(img, mask=mask, **kwargs)
         self.segmenter = segmenter
 
-    def process_page_pcgts(self, *input_pcgts : OcrdPage, output_file_id : Optional[str] = None, page_id : Optional[str] = None) -> OcrdPage:
+    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdProcessResult:
         """Segment into (regions and) lines with Kraken.
 
         Iterate over the element hierarchy of the PAGE-XML down to the
@@ -100,6 +101,7 @@ class KrakenSegment(Processor):
 
         pcgts = input_pcgts[0]
         page = pcgts.get_Page()
+        assert page
         page_image, page_coords, page_info = self.workspace.image_from_page(
             page, page_id,
             feature_selector="binarized" if self.use_legacy else "")
@@ -142,7 +144,7 @@ class KrakenSegment(Processor):
                     self.logger.warning('Keeping %d lines in region "%s"', len(region.TextLine or []), region.id)
                 self._process_region(page_image, page_coords, region, zoom)
 
-        return pcgts
+        return OcrdProcessResult(pcgts)
 
     def _process_page(self, page_image, page_coords, page, zoom=1.0):
         def getmask():

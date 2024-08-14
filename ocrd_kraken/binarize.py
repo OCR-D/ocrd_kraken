@@ -2,6 +2,8 @@ from __future__ import absolute_import
 import os
 from os.path import join
 from typing import Optional
+
+from ocrd_models.ocrd_process_result import OcrdProcessResult
 import kraken.binarization
 from ocrd import Processor
 from ocrd_utils import assert_file_grp_cardinality, getLogger, make_file_id, MIMETYPE_PAGE
@@ -22,7 +24,7 @@ class KrakenBinarize(Processor):
         assert_file_grp_cardinality(self.input_file_grp, 1)
         assert_file_grp_cardinality(self.output_file_grp, 1)
 
-    def process_page_pcgts(self, *input_pcgts : OcrdPage, output_file_id : Optional[str] = None, page_id : Optional[str] = None) -> OcrdPage:
+    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdProcessResult:
         """Binarize the pages/regions/lines with Kraken.
 
         Iterate over the input PAGE element hierarchy down to the requested
@@ -50,14 +52,14 @@ class KrakenBinarize(Processor):
         assert page
         page_image, page_xywh, _ = self.workspace.image_from_page(
             page, page_id, feature_filter='binarized')
-        ret = [pcgts]
+        images = []
         if self.parameter['level-of-operation'] == 'page':
             self.logger.info("Binarizing page '%s'", page_id)
             bin_image = kraken.binarization.nlbin(page_image)
             bin_image_id = f'{output_file_id}.IMG-BIN'
             bin_image_path = join(self.output_file_grp, f'{bin_image_id}.png')
             page.add_AlternativeImage(AlternativeImageType(filename=bin_image_path, comments=f'{page_xywh["features"]},binarized'))
-            ret.append((bin_image, bin_image_id, bin_image_path))
+            images.append((bin_image, bin_image_id, bin_image_path))
         else:
             for region in page.get_AllRegions(classes=['Text']):
                 region_image, region_xywh = self.workspace.image_from_segment(
@@ -68,7 +70,7 @@ class KrakenBinarize(Processor):
                     bin_image_id = f'{output_file_id}_{region.id}.IMG-BIN'
                     bin_image_path = join(self.output_file_grp, f'{bin_image_id}.png')
                     region.add_AlternativeImage(AlternativeImageType(filename=bin_image_path, comments=f'{region_xywh["features"]},binarized'))
-                    ret.append((bin_image, bin_image_id, bin_image_path))
+                    images.append((bin_image, bin_image_id, bin_image_path))
                 else:
                     for line in region.get_TextLine():
                         line_image, line_xywh = self.workspace.image_from_segment(
@@ -78,5 +80,5 @@ class KrakenBinarize(Processor):
                         bin_image_id = f'{output_file_id}_{region.id}_{line.id}.IMG-BIN'
                         bin_image_path = join(self.output_file_grp, f'{bin_image_id}.png')
                         line.add_AlternativeImage(AlternativeImageType(filename=bin_image_path, comments=f'{page_xywh["features"]},binarized'))
-                        ret.append((bin_image, bin_image_id, bin_image_path))
-        return ret
+                        images.append((bin_image, bin_image_id, bin_image_path))
+        return OcrdProcessResult(pcgts, images)
