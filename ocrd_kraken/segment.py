@@ -46,8 +46,6 @@ class KrakenSegment(Processor):
         Load models
         """
         self.logger = getLogger('processor.KrakenSegment')
-        assert_file_grp_cardinality(self.input_file_grp, 1)
-        assert_file_grp_cardinality(self.output_file_grp, 1)
         kwargs = {}
         kwargs['text_direction'] = self.parameter['text_direction']
         self.use_legacy = self.parameter['use_legacy']

@@ -4,8 +4,8 @@
   "tools": {
     "ocrd-kraken-binarize": {
       "executable": "ocrd-kraken-binarize",
-      "input_file_grp": ["OCR-D-IMG", "OCR-D-PRE-CROP", "OCR-D-SEG-REGION", "OCR-D-SEG-LINE"],
-      "output_file_grp": ["OCR-D-PRE-BIN"],
+      "input_file_grp_cardinality": 1,
+      "output_file_grp_cardinality": 1,
       "categories": [
         "Image preprocessing"
       ],
@@ -24,8 +24,8 @@
     },
     "ocrd-kraken-segment": {
       "executable": "ocrd-kraken-segment",
-      "input_file_grp": ["OCR-D-IMG", "OCR-D-PRE-CROP", "OCR-D-PRE-BIN"],
-      "output_file_grp": ["OCR-D-SEG-REGION", "OCR-D-SEG-LINE"],
+      "input_file_grp_cardinality": 1,
+      "output_file_grp_cardinality": 1,
       "categories": [
         "Layout analysis"
       ],
@@ -128,8 +128,8 @@
     },
     "ocrd-kraken-recognize": {
       "executable": "ocrd-kraken-recognize",
-      "input_file_grp": ["OCR-D-SEG-LINE"],
-      "output_file_grp": ["OCR-D-OCR-KRAK"],
+      "input_file_grp_cardinality": 1,
+      "output_file_grp_cardinality": 1,
       "categories": ["Text recognition and optimization"],
       "steps": ["recognition/text-recognition"],
       "description": "Text recognition with Kraken",

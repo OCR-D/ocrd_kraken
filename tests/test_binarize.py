@@ -6,7 +6,7 @@ import pytest
 
 from tests.base import assets, main
 
-from ocrd import Resolver
+from ocrd import Resolver, run_processor
 from ocrd_kraken.binarize import KrakenBinarize
 from ocrd_utils.logging import setOverrideLogLevel
 
@@ -37,24 +37,24 @@ def workspace(tmpdir):
 #      )
 
 def test_binarize_regions(workspace):
-    proc = KrakenBinarize(
-        workspace,
-        input_file_grp="OCR-D-GT-PAGE",
-        output_file_grp="OCR-D-IMG-BIN-KRAKEN",
-        parameter={'level-of-operation': 'region'}
+    run_processor(KrakenBinarize,
+                  workspace=workspace,
+                  input_file_grp="OCR-D-GT-PAGE",
+                  output_file_grp="OCR-D-IMG-BIN-KRAKEN",
+                  parameter={'level-of-operation': 'region'}
     )
-    proc.process()
     workspace.save_mets()
+    # FIXME: add result assertions (find_files, parsing PAGE etc)
 
 def test_binarize_lines(workspace):
-    proc = KrakenBinarize(
-        workspace,
-        input_file_grp="OCR-D-GT-PAGE",
-        output_file_grp="OCR-D-IMG-BIN-KRAKEN",
-        parameter={'level-of-operation': 'line'}
+    run_processor(KrakenBinarize,
+                  workspace=workspace,
+                  input_file_grp="OCR-D-GT-PAGE",
+                  output_file_grp="OCR-D-IMG-BIN-KRAKEN",
+                  parameter={'level-of-operation': 'line'}
     )
-    proc.process()
     workspace.save_mets()
+    # FIXME: add result assertions (find_files, parsing PAGE etc)
 
 if __name__ == "__main__":
     main(__file__)
