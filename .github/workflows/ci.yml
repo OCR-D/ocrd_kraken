@@ -15,7 +15,8 @@ jobs:
     #
     # Related issue: https://github.com/actions/runner-images/issues/672.
     # runs-on: ubuntu-latest
-    runs-on: macos-latest
+    # runs-on: macos-latest
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
