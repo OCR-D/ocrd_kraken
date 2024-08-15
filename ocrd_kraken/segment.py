@@ -62,7 +62,7 @@ class KrakenSegment(Processor):
             return segment(img, mask=mask, **kwargs)
         self.segmenter = segmenter
 
-    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdPageResult:
+    def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """Segment into (regions and) lines with Kraken.
 
         Iterate over the element hierarchy of the PAGE-XML down to the
@@ -89,6 +89,7 @@ class KrakenSegment(Processor):
         """
 
         pcgts = input_pcgts[0]
+        assert pcgts
         page = pcgts.get_Page()
         assert page
         page_image, page_coords, page_info = self.workspace.image_from_page(

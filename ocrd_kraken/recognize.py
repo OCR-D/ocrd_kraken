@@ -68,7 +68,7 @@ class KrakenRecognize(Processor):
                          self.parameter['bidi_reordering'])
         self.predict = predict
 
-    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdPageResult:
+    def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """Recognize text on lines with Kraken.
 
         Open the parsed PAGE-XML file, then iterate over the element hierarchy
@@ -92,7 +92,9 @@ class KrakenRecognize(Processor):
         from kraken.containers import Segmentation, BaselineLine, BBoxLine
 
         pcgts = input_pcgts[0]
+        assert pcgts
         page = pcgts.get_Page()
+        assert page
         page_image, page_coords, _ = self.workspace.image_from_page(
             page, page_id,
             feature_selector="binarized"

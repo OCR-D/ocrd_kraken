@@ -23,7 +23,7 @@ class KrakenBinarize(Processor):
     def setup(self):
         self.logger = getLogger('processor.KrakenBinarize')
 
-    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdPageResult:
+    def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """Binarize the pages/regions/lines with Kraken.
 
         Iterate over the input PAGE element hierarchy down to the requested
@@ -47,6 +47,7 @@ class KrakenBinarize(Processor):
         self.logger.debug('Level of operation: "%s"', self.parameter['level-of-operation'])
 
         pcgts = input_pcgts[0]
+        assert pcgts
         page = pcgts.get_Page()
         assert page
         page_image, page_xywh, _ = self.workspace.image_from_page(
@@ -54,30 +55,24 @@ class KrakenBinarize(Processor):
         result = OcrdPageResult(pcgts)
         if self.parameter['level-of-operation'] == 'page':
             self.logger.info("Binarizing page '%s'", page_id)
-            bin_image = kraken.binarization.nlbin(page_image)
-            bin_image_id = f'{output_file_id}.IMG-BIN'
-            bin_image_path = join(self.output_file_grp, f'{bin_image_id}.png')
-            page.add_AlternativeImage(AlternativeImageType(filename=bin_image_path, comments=f'{page_xywh["features"]},binarized'))
-            result.images.append(OcrdPageResultImage(bin_image, bin_image_id, bin_image_path))
+            alternative_image = AlternativeImageType(comments=f'{page_xywh["features"]},binarized')
+            page.add_AlternativeImage(alternative_image)
+            result.images.append(OcrdPageResultImage(kraken.binarization.nlbin(page_image), '.IMG-BIN', alternative_image))
         else:
             for region in page.get_AllRegions(classes=['Text']):
                 region_image, region_xywh = self.workspace.image_from_segment(
                     region, page_image, page_xywh, feature_filter='binarized')
                 if self.parameter['level-of-operation'] == 'region':
                     self.logger.info("Binarizing region '%s'", region.id)
-                    bin_image = kraken.binarization.nlbin(region_image)
-                    bin_image_id = f'{output_file_id}_{region.id}.IMG-BIN'
-                    bin_image_path = join(self.output_file_grp, f'{bin_image_id}.png')
-                    region.add_AlternativeImage(AlternativeImageType(filename=bin_image_path, comments=f'{region_xywh["features"]},binarized'))
-                    result.images.append(OcrdPageResultImage(bin_image, bin_image_id, bin_image_path))
+                    alternative_image = AlternativeImageType(comments=f'{region_xywh["features"]},binarized')
+                    region.add_AlternativeImage(alternative_image)
+                    result.images.append(OcrdPageResultImage(kraken.binarization.nlbin(region_image), f'{region.id}.IMG-BIN', alternative_image))
                 else:
                     for line in region.get_TextLine():
                         line_image, line_xywh = self.workspace.image_from_segment(
                             line, region_image, region_xywh, feature_filter='binarized')
                         self.logger.info("Binarizing line '%s'", line.id)
-                        bin_image = kraken.binarization.nlbin(line_image)
-                        bin_image_id = f'{output_file_id}_{region.id}_{line.id}.IMG-BIN'
-                        bin_image_path = join(self.output_file_grp, f'{bin_image_id}.png')
-                        line.add_AlternativeImage(AlternativeImageType(filename=bin_image_path, comments=f'{page_xywh["features"]},binarized'))
-                        result.images.append(OcrdPageResultImage(bin_image, bin_image_id, bin_image_path))
+                        alternative_image = AlternativeImageType(comments=f'{line_xywh["features"]},binarized')
+                        line.add_AlternativeImage(alternative_image)
+                        result.images.append(OcrdPageResultImage(kraken.binarization.nlbin(line_image), f'{region.id}_{line.id}.IMG-BIN', alternative_image))
         return result
