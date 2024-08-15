@@ -1,6 +1,5 @@
-from os.path import join
 from typing import Optional, Union
-from ocrd_models import OcrdProcessResult
+from ocrd.processor.base import OcrdPageResult
 import regex
 import itertools
 import numpy as np
@@ -11,8 +10,6 @@ from shapely.ops import unary_union, nearest_points
 from ocrd import Processor
 from ocrd_utils import (
     getLogger,
-    make_file_id,
-    assert_file_grp_cardinality,
     coordinates_of_segment,
     coordinates_for_segment,
     bbox_from_polygon,
@@ -20,11 +17,8 @@ from ocrd_utils import (
     points_from_bbox,
     polygon_from_points,
     xywh_from_points,
-    bbox_from_points,
     transform_coordinates,
-    MIMETYPE_PAGE,
 )
-from ocrd_modelfactory import page_from_file
 from ocrd_models.ocrd_page import (
     OcrdPage,
     RegionRefType,
@@ -44,8 +38,6 @@ from ocrd_models.ocrd_page_generateds import (
     ReadingDirectionSimpleType,
     TextLineOrderSimpleType
 )
-
-from ocrd_kraken.config import OCRD_TOOL
 
 class KrakenRecognize(Processor):
 
@@ -76,7 +68,7 @@ class KrakenRecognize(Processor):
                          self.parameter['bidi_reordering'])
         self.predict = predict
 
-    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdProcessResult:
+    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdPageResult:
         """Recognize text on lines with Kraken.
 
         Open the parsed PAGE-XML file, then iterate over the element hierarchy
@@ -222,7 +214,7 @@ class KrakenRecognize(Processor):
             page_update_higher_textequiv_levels('line', pcgts)
 
         self.logger.info("Finished recognition, serializing")
-        return OcrdProcessResult(pcgts)
+        return OcrdPageResult(pcgts)
 
 # zzz should go into core ocrd_utils
 def baseline_of_segment(segment, coords):

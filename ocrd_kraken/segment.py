@@ -1,20 +1,15 @@
 from typing import Optional
 from PIL import ImageOps
-from os.path import join
 
 from ocrd import Processor
-from ocrd_models import OcrdProcessResult
+from ocrd.processor.ocrd_page_result import OcrdPageResult
 from ocrd_utils import (
     getLogger,
-    assert_file_grp_cardinality,
-    make_file_id,
-    concat_padded,
     polygon_from_x0y0x1y1,
     points_from_polygon,
     polygon_mask,
     coordinates_for_segment,
     coordinates_of_segment,
-    MIMETYPE_PAGE
 )
 import ocrd_models.ocrd_page
 from ocrd_models.ocrd_page import (
@@ -25,15 +20,11 @@ from ocrd_models.ocrd_page import (
     TextLineType,
     CoordsType,
     BaselineType,
-    to_xml
 )
-from ocrd_modelfactory import page_from_file
 
 import shapely.geometry as geom
 from shapely.prepared import prep as geom_prep
 import torch
-
-from .config import OCRD_TOOL
 
 class KrakenSegment(Processor):
 
@@ -71,7 +62,7 @@ class KrakenSegment(Processor):
             return segment(img, mask=mask, **kwargs)
         self.segmenter = segmenter
 
-    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdProcessResult:
+    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdPageResult:
         """Segment into (regions and) lines with Kraken.
 
         Iterate over the element hierarchy of the PAGE-XML down to the
@@ -142,7 +133,7 @@ class KrakenSegment(Processor):
                     self.logger.warning('Keeping %d lines in region "%s"', len(region.TextLine or []), region.id)
                 self._process_region(page_image, page_coords, region, zoom)
 
-        return OcrdProcessResult(pcgts)
+        return OcrdPageResult(pcgts)
 
     def _process_page(self, page_image, page_coords, page, zoom=1.0):
         def getmask():
