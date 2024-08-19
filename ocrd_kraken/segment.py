@@ -36,7 +36,6 @@ class KrakenSegment(Processor):
         """
         Load models
         """
-        self.logger = getLogger('processor.KrakenSegment')
         kwargs = {}
         kwargs['text_direction'] = self.parameter['text_direction']
         self.use_legacy = self.parameter['use_legacy']

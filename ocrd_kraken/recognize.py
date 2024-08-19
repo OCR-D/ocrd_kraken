@@ -50,7 +50,6 @@ class KrakenRecognize(Processor):
         Load model, set predict function
         """
 
-        self.logger = getLogger('processor.KrakenRecognize')
         import torch
         from kraken.rpred import rpred
         from kraken.lib.models import load_any
