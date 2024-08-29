@@ -1,7 +1,5 @@
 # pylint: disable=import-error
 
-from tests.base import *
-
 from ocrd import run_processor
 from ocrd_kraken.segment import KrakenSegment
 

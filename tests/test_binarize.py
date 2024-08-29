@@ -2,7 +2,7 @@
 
 import json
 
-from tests.base import *
+from .assets import assets
 
 from ocrd import run_processor
 from ocrd_kraken.binarize import KrakenBinarize

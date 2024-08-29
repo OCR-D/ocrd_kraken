@@ -7,7 +7,7 @@ import pytest
 from ocrd import Resolver, Workspace, OcrdMetsServer
 from ocrd_utils import pushd_popd, disableLogging, initLogging, setOverrideLogLevel, config
 
-from tests.assets import assets
+from .assets import assets
 
 @pytest.fixture
 def workspace(tmpdir, pytestconfig):
@@ -34,3 +34,4 @@ def workspace_aufklaerung_region(workspace):
 @pytest.fixture
 def workspace_sbb(workspace):
     yield from workspace(assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'))
+
