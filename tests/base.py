@@ -1,89 +1,36 @@
 # pylint: disable=unused-import
 
-from os.path import dirname, realpath
-from os import chdir
-import sys
-import logging
-import io
-import collections
-from unittest import TestCase as VanillaTestCase, skip, main as unittests_main
+from multiprocessing import Process
+from time import sleep
 import pytest
-from ocrd_utils import disableLogging, initLogging
 
-from tests.assets import assets, copy_of_directory
+from ocrd import Resolver, Workspace, OcrdMetsServer
+from ocrd_utils import pushd_popd, disableLogging, initLogging, setOverrideLogLevel, config
 
+from tests.assets import assets
 
-def main(fn=None):
-    if fn:
-        sys.exit(pytest.main([fn]))
-    else:
-        unittests_main()
-
-
-class TestCase(VanillaTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        chdir(dirname(realpath(__file__)) + '/..')
-
-    def setUp(self):
-        disableLogging()
+@pytest.fixture
+def workspace(tmpdir, pytestconfig):
+    def _make_workspace(workspace_path):
         initLogging()
+        if pytestconfig.getoption('verbose') > 0:
+            setOverrideLogLevel('DEBUG')
+        with pushd_popd(tmpdir):
+            yield Resolver().workspace_from_url(workspace_path, dst_dir=tmpdir, download=True)
+    return _make_workspace
 
-class CapturingTestCase(TestCase):
-    """
-    A TestCase that needs to capture stderr/stdout and invoke click CLI.
-    """
+@pytest.fixture
+def workspace_manifesto(workspace):
+    yield from workspace(assets.path_to('communist_manifesto/data/mets.xml'))
 
-    @pytest.fixture(autouse=True)
-    def _setup_pytest_capfd(self, capfd):
-        self.capfd = capfd
+@pytest.fixture
+def workspace_aufklaerung(workspace):
+    yield from workspace(assets.path_to('kant_aufklaerung_1784/data/mets.xml'))
 
-    def invoke_cli(self, cli, args):
-        """
-        Substitution for click.CliRunner.invooke that works together nicely
-        with unittests/pytest capturing stdout/stderr.
-        """
-        self.capture_out_err()  # XXX snapshot just before executing the CLI
-        code = 0
-        sys.argv[1:] = args # XXX necessary because sys.argv reflects pytest args not cli args
-        try:
-            cli.main(args=args)
-        except SystemExit as e:
-            code = e.code
-        out, err = self.capture_out_err()
-        return code, out, err
+@pytest.fixture
+def workspace_aufklaerung_region(workspace):
+    yield from workspace(assets.path_to('kant_aufklaerung_1784-page-region/data/mets.xml'))
 
-    def capture_out_err(self):
-        return self.capfd.readouterr()
-
-#  import traceback
-#  import warnings
-#  def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
-#      log = file if hasattr(file, 'write') else sys.stderr
-#      traceback.print_stack(file=log)
-#      log.write(warnings.formatwarning(message, category, filename, lineno, line))
-#  warnings.showwarning = warn_with_traceback
-
-# https://stackoverflow.com/questions/37944111/python-rolling-log-to-a-variable
-# Adapted from http://alanwsmith.com/capturing-python-log-output-in-a-variable
-
-class FIFOIO(io.TextIOBase):
-    def __init__(self, size, *args):
-        self.maxsize = size
-        io.TextIOBase.__init__(self, *args)
-        self.deque = collections.deque()
-    def getvalue(self):
-        return ''.join(self.deque)
-    def write(self, x):
-        self.deque.append(x)
-        self.shrink()
-    def shrink(self):
-        if self.maxsize is None:
-            return
-        size = sum(len(x) for x in self.deque)
-        while size > self.maxsize:
-            x = self.deque.popleft()
-            size -= len(x)
-
-sys.path.append(dirname(realpath(__file__)) + '/../ocrd')
+@pytest.fixture
+def workspace_sbb(workspace):
+    yield from workspace(assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'))
