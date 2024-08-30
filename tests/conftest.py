@@ -9,15 +9,40 @@ from ocrd_utils import pushd_popd, disableLogging, initLogging, setOverrideLogLe
 
 from .assets import assets
 
-@pytest.fixture
-def workspace(tmpdir, pytestconfig):
+CONFIGS = ['', 'pageparallel', 'metscache', 'pageparallel+metscache']
+
+@pytest.fixture(params=CONFIGS)
+def workspace(tmpdir, pytestconfig, request):
     def _make_workspace(workspace_path):
         initLogging()
         if pytestconfig.getoption('verbose') > 0:
             setOverrideLogLevel('DEBUG')
         with pushd_popd(tmpdir):
-            yield Resolver().workspace_from_url(workspace_path, dst_dir=tmpdir, download=True)
+            directory = str(tmpdir)
+            resolver = Resolver()
+            workspace = resolver.workspace_from_url(workspace_path, dst_dir=directory, download=True)
+            if 'metscache' in request.param:
+                config.OCRD_METS_CACHING = True
+                print("enabled METS caching")
+            if 'pageparallel' in request.param:
+                config.OCRD_MAX_PARALLEL_PAGES = 4
+                print("enabled page-parallel processing")
+                def _start_mets_server(*args, **kwargs):
+                    print("running with METS server")
+                    server = OcrdMetsServer(*args, **kwargs)
+                    server.startup()
+                process = Process(target=_start_mets_server,
+                                  kwargs={'workspace': workspace, 'url': 'mets.sock'})
+                process.start()
+                sleep(1)
+                workspace = Workspace(resolver, directory, mets_server_url='mets.sock')
+                yield {'workspace': workspace, 'mets_server_url': 'mets.sock'}
+                process.terminate()
+            else:
+                yield {'workspace': workspace}
+        config.reset_defaults()
     return _make_workspace
+
 
 @pytest.fixture
 def workspace_manifesto(workspace):
@@ -34,4 +59,3 @@ def workspace_aufklaerung_region(workspace):
 @pytest.fixture
 def workspace_sbb(workspace):
     yield from workspace(assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'))
-
