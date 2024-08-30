@@ -11,8 +11,6 @@ from ocrd_utils import assert_file_grp_cardinality, getLogger, make_file_id, MIM
 from ocrd_models.ocrd_page import AlternativeImageType, OcrdPage, to_xml
 from ocrd_modelfactory import page_from_file
 
-from ocrd_kraken.config import OCRD_TOOL
-
 
 class KrakenBinarize(Processor):
 

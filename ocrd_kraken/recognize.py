@@ -9,7 +9,6 @@ from shapely.ops import unary_union, nearest_points
 
 from ocrd import Processor
 from ocrd_utils import (
-    getLogger,
     coordinates_of_segment,
     coordinates_for_segment,
     bbox_from_polygon,
@@ -32,12 +31,12 @@ from ocrd_models.ocrd_page import (
     WordType,
     GlyphType,
     CoordsType,
-    to_xml
 )
 from ocrd_models.ocrd_page_generateds import (
     ReadingDirectionSimpleType,
     TextLineOrderSimpleType
 )
+
 
 class KrakenRecognize(Processor):
 
