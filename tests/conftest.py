@@ -21,6 +21,7 @@ def workspace(tmpdir, pytestconfig, request):
             directory = str(tmpdir)
             resolver = Resolver()
             workspace = resolver.workspace_from_url(workspace_path, dst_dir=directory, download=True)
+            config.OCRD_MISSING_OUTPUT = "ABORT"
             if 'metscache' in request.param:
                 config.OCRD_METS_CACHING = True
                 print("enabled METS caching")
