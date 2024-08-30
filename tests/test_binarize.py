@@ -1,60 +1,61 @@
 # pylint: disable=import-error
 
+import json
 import os
-import shutil
-import pytest
 
-from tests.base import assets, main
+from ocrd import run_processor
+from ocrd_utils import MIMETYPE_PAGE
+from ocrd_models.constants import NAMESPACES
+from ocrd_modelfactory import page_from_file
 
-from ocrd import Resolver
 from ocrd_kraken.binarize import KrakenBinarize
-from ocrd_utils.logging import setOverrideLogLevel
 
-setOverrideLogLevel('DEBUG')
+from .assets import assets
+
 
 PARAM_JSON = assets.url_of('param-binarize.json')
 
+def analyse_result(ws, level):
+    assert os.path.isdir(os.path.join(ws.directory, 'OCR-D-BIN-KRAKEN'))
+    out_files = list(ws.find_files(fileGrp="OCR-D-BIN-KRAKEN", mimetype=MIMETYPE_PAGE))
+    assert len(out_files), "found no output PAGE file"
+    out_images = list(ws.find_files(fileGrp="OCR-D-BIN-KRAKEN", mimetype="//^image/.*"))
+    assert len(out_images), "found no output image file"
+    out_pcgts = page_from_file(out_files[0])
+    assert out_pcgts is not None
+    out_images = out_pcgts.etree.xpath('//page:%s/page:AlternativeImage[contains(@comments,"binarized")]' % level, namespaces=NAMESPACES)
+    assert len(out_images) > 0, "found no binarized AlternativeImages in output PAGE file"
 
-@pytest.fixture()
-def workspace(tmpdir):
-    if os.path.exists(tmpdir):
-        shutil.rmtree(tmpdir)
-    workspace = Resolver().workspace_from_url(
-        assets.path_to('kant_aufklaerung_1784/data/mets.xml'),
-        dst_dir=tmpdir,
-        download=True
+def test_param_json(workspace_sbb):
+    run_processor(KrakenBinarize,
+                  input_file_grp="OCR-D-IMG",
+                  output_file_grp="OCR-D-BIN-KRAKEN",
+                  parameter=json.load(open(PARAM_JSON)),
+                  **workspace_sbb,
     )
-    return workspace
+    ws = workspace_sbb['workspace']
+    ws.save_mets()
+    analyse_result(ws, 'Page')
 
-
-#  def test_param_json(self):
-#      workspace =  resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'), dst_dir=WORKSPACE_DIR)
-#      run_processor(
-#          KrakenBinarize,
-#          resolver=resolver,
-#          workspace=workspace,
-#          parameter=PARAM_JSON
-#      )
-
-def test_binarize_regions(workspace):
-    proc = KrakenBinarize(
-        workspace,
-        input_file_grp="OCR-D-GT-PAGE",
-        output_file_grp="OCR-D-IMG-BIN-KRAKEN",
-        parameter={'level-of-operation': 'region'}
+def test_binarize_regions(workspace_aufklaerung):
+    run_processor(KrakenBinarize,
+                  input_file_grp="OCR-D-GT-PAGE",
+                  output_file_grp="OCR-D-BIN-KRAKEN",
+                  parameter={'level-of-operation': 'region'},
+                  **workspace_aufklaerung,
     )
-    proc.process()
-    workspace.save_mets()
+    ws = workspace_aufklaerung['workspace']
+    ws.save_mets()
+    analyse_result(ws, 'TextRegion')
 
-def test_binarize_lines(workspace):
-    proc = KrakenBinarize(
-        workspace,
-        input_file_grp="OCR-D-GT-PAGE",
-        output_file_grp="OCR-D-IMG-BIN-KRAKEN",
-        parameter={'level-of-operation': 'line'}
+def test_binarize_lines(workspace_aufklaerung):
+    run_processor(KrakenBinarize,
+                  input_file_grp="OCR-D-GT-PAGE",
+                  output_file_grp="OCR-D-BIN-KRAKEN",
+                  parameter={'level-of-operation': 'line'},
+                  **workspace_aufklaerung,
     )
-    proc.process()
-    workspace.save_mets()
+    ws = workspace_aufklaerung['workspace']
+    ws.save_mets()
+    analyse_result(ws, 'TextLine')
 
-if __name__ == "__main__":
-    main(__file__)
