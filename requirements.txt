@@ -1,4 +1,4 @@
-ocrd >= 3.0.0a1
+ocrd >= 3.0.0b2
 kraken >= 5.0
 scipy
 shapely
