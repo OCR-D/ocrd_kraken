@@ -1,21 +1,20 @@
-FROM ocrd/core-cuda
+ARG DOCKER_BASE_IMAGE
+FROM $DOCKER_BASE_IMAGE
 ARG VCS_REF
 ARG BUILD_DATE
-MAINTAINER unixprog@gmail.com
-LABEL maintainer="https://ocr-d.de"
-LABEL org.label-schema.vendor="DFG-Funded Initiative for Optical Character Recognition Development"
-LABEL org.label-schema.name="ocrd_kraken"
-LABEL org.label-schema.vcs-ref=$VCS_REF
-LABEL org.label-schema.vcs-url="https://github.com/OCR-D/ocrd_kraken"
-LABEL org.label-schema.build-date=$BUILD_DATE
-LABEL org.opencontainers.image.vendor="DFG-Funded Initiative for Optical Character Recognition Development"
-LABEL org.opencontainers.image.title="ocrd_kraken"
-LABEL org.opencontainers.image.description="Kraken bindings"
-LABEL org.opencontainers.image.source="https://github.com/OCR-D/ocrd_kraken"
-LABEL org.opencontainers.image.documentation="https://github.com/OCR-D/ocrd_kraken/blob/${VCS_REF}/README.md"
-LABEL org.opencontainers.image.revision=$VCS_REF
-LABEL org.opencontainers.image.created=$BUILD_DATE
-LABEL org.opencontainers.image.base.name=ocrd/core-cuda
+LABEL \
+    maintainer="https://ocr-d.de/kontakt" \
+    org.label-schema.vcs-ref=$VCS_REF \
+    org.label-schema.vcs-url="https://github.com/OCR-D/ocrd_kraken" \
+    org.label-schema.build-date=$BUILD_DATE \
+    org.opencontainers.image.vendor="DFG-Funded Initiative for Optical Character Recognition Development" \
+    org.opencontainers.image.title="ocrd_kraken" \
+    org.opencontainers.image.description="Kraken bindings" \
+    org.opencontainers.image.source="https://github.com/OCR-D/ocrd_kraken" \
+    org.opencontainers.image.documentation="https://github.com/OCR-D/ocrd_kraken/blob/${VCS_REF}/README.md" \
+    org.opencontainers.image.revision=$VCS_REF \
+    org.opencontainers.image.created=$BUILD_DATE \
+    org.opencontainers.image.base.name=ocrd/core-cuda
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONIOENCODING utf8
