@@ -1,6 +1,10 @@
 from typing import Optional
 from PIL import ImageOps
 
+import shapely.geometry as geom
+from shapely.prepared import prep as geom_prep
+import torch
+
 from ocrd import Processor
 from ocrd.processor.ocrd_page_result import OcrdPageResult
 from ocrd_utils import (
@@ -22,9 +26,39 @@ from ocrd_models.ocrd_page import (
     BaselineType,
 )
 
-import shapely.geometry as geom
-from shapely.prepared import prep as geom_prep
-import torch
+from .common import KrakenPredictor
+
+class KrakenSegmentPredictor(KrakenPredictor):
+    def setup(self):
+        self.use_legacy = self.parameter.pop('use_legacy')
+        if self.use_legacy:
+            self.logger.info("Using legacy segmenter")
+            # adapt to Kraken v5 changes:
+            self.parameter['no_hlines'] = self.parameter.pop('remove_hlines')
+            self.parameter.pop('device')
+        else:
+            from kraken.lib.vgsl import TorchVGSLModel
+            self.logger.info("Using blla segmenter")
+            self.logger.info("loading model '%s'", self.parameter['model'])
+            self.parameter['model'] = TorchVGSLModel.load_model(self.parameter['model'])
+            device = self.parameter['device']
+            if device != 'cpu' and not torch.cuda.is_available():
+                device = 'cpu'
+            if device == 'cpu':
+                self.logger.warning("no CUDA device available. Running without GPU will be slow")
+            self.parameter['device'] = device
+            # adapt to Kraken v5 changes:
+            self.parameter.pop('scale')
+            self.parameter.pop('remove_hlines')
+            self.parameter.pop('maxcolseps')
+            self.parameter.pop('black_colseps')
+    def predict(self, *inputs):
+        if self.use_legacy:
+            from kraken.pageseg import segment
+        else:
+            from kraken.blla import segment
+        image, mask = inputs
+        return segment(image, mask=mask, **self.parameter)
 
 class KrakenSegment(Processor):
 
@@ -36,30 +70,22 @@ class KrakenSegment(Processor):
         """
         Load models
         """
-        kwargs = {}
-        kwargs['text_direction'] = self.parameter['text_direction']
-        self.use_legacy = self.parameter['use_legacy']
-        if self.use_legacy:
-            from kraken.pageseg import segment
-            kwargs['scale'] = self.parameter['scale']
-            kwargs['maxcolseps'] = self.parameter['maxcolseps']
-            kwargs['black_colseps'] = self.parameter['black_colseps']
-            self.logger.info("Using legacy segmenter")
-        else:
-            from kraken.lib.vgsl import TorchVGSLModel
-            from kraken.blla import segment
-            self.logger.info("Using blla segmenter")
-            blla_model_fname = self.resolve_resource(self.parameter['blla_model'])
-            kwargs['model'] = TorchVGSLModel.load_model(blla_model_fname)
-            device = self.parameter['device']
-            if device != 'cpu' and not torch.cuda.is_available():
-                device = 'cpu'
-            if device == 'cpu':
-                self.logger.warning("no CUDA device available. Running without GPU will be slow")
-            kwargs['device'] = device
-        def segmenter(img, mask=None):
-            return segment(img, mask=mask, **kwargs)
-        self.segmenter = segmenter
+        parameter = dict(self.parameter)
+        model = parameter.pop('blla_model')
+        del parameter['blla_classes']
+        del parameter['overwrite_segments']
+        del parameter['level-of-operation']
+        self.use_legacy = parameter['use_legacy']
+        if not self.use_legacy:
+            parameter['model'] = self.resolve_resource(model)
+        self.predictor = KrakenSegmentPredictor(self.logger, parameter)
+        self.predictor.start()
+
+    def shutdown(self):
+        import multiprocessing as mp
+        if getattr(self, 'predictor', None):
+            self.predictor.shutdown()
+            del self.predictor
 
     def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """Segment into (regions and) lines with Kraken.
@@ -109,7 +135,7 @@ class KrakenSegment(Processor):
                 page.TextRegion = []
             elif len(page.TextRegion or []):
                 self.logger.warning('Keeping %d text regions on page "%s"', len(page.TextRegion or []), page.id)
-            self._process_page(page_image, page_coords, page, zoom)
+            self._process_page(page_image, page_coords, page, page_id, zoom)
         elif self.parameter['level-of-operation'] == 'table':
             regions = page.get_AllRegions(classes=['Table'])
             if not regions:
@@ -120,7 +146,7 @@ class KrakenSegment(Processor):
                     region.TextRegion = []
                 elif len(region.TextRegion or []):
                     self.logger.warning('Keeping %d text regions in region "%s"', len(region.TextRegion or []), region.id)
-                self._process_page(page_image, page_coords, region, zoom)
+                self._process_page(page_image, page_coords, region, page_id, zoom)
         else:
             regions = page.get_AllRegions(classes=['Text'])
             if not regions:
@@ -131,11 +157,11 @@ class KrakenSegment(Processor):
                     region.TextLine = []
                 elif len(region.TextLine or []):
                     self.logger.warning('Keeping %d lines in region "%s"', len(region.TextLine or []), region.id)
-                self._process_region(page_image, page_coords, region, zoom)
+                self._process_region(page_image, page_coords, region, page_id, zoom)
 
         return OcrdPageResult(pcgts)
 
-    def _process_page(self, page_image, page_coords, page, zoom=1.0):
+    def _process_page(self, page_image, page_coords, page, page_id, zoom=1.0):
         def getmask():
             # use mask if existing regions (any type for page, text cells for table)
             # or segment is lower than page level
@@ -173,10 +199,10 @@ class KrakenSegment(Processor):
                 # poly = geom.Polygon(poly).buffer(20/zoom).exterior.coords[:-1]
                 mask.paste(255, mask=polygon_mask(page_image, poly))
             return mask
-        res = self.segmenter(page_image, mask=getmask())
+        res = self.predictor(page_id, page_image, getmask())
         self.logger.debug("Finished segmentation, serializing")
+        #self.logger.debug(res)
         if self.use_legacy:
-            self.logger.debug(res)
             idx_line = 0
             for idx_line, line in enumerate(res.lines):
                 line_poly = polygon_from_x0y0x1y1(line.bbox)
@@ -191,7 +217,6 @@ class KrakenSegment(Processor):
                 page.add_TextRegion(region_elem)
             self.logger.debug("Found %d lines on page %s", idx_line + 1, page.id)
         else:
-            self.logger.debug(res)
             handled_lines = {}
             regions = [(type_, region)
                        for type_ in res.regions
@@ -245,7 +270,7 @@ class KrakenSegment(Processor):
                     page.add_TextRegion(region_elem)
             self.logger.debug("Found %d lines and %d regions on page %s", idx_line + 1, idx_region + 1, page.id)
 
-    def _process_region(self, page_image, page_coords, region, zoom=1.0):
+    def _process_region(self, page_image, page_coords, region, page_id, zoom=1.0):
         def getmask():
             poly = coordinates_of_segment(region, page_image, page_coords)
             poly = geom.Polygon(poly).buffer(20/zoom).exterior.coords[:-1]
@@ -256,7 +281,7 @@ class KrakenSegment(Processor):
                 # poly = geom.Polygon(poly).buffer(20/zoom).exterior.coords[:-1]
                 mask.paste(255, mask=polygon_mask(page_image, poly))
             return mask
-        res = self.segmenter(page_image, mask=getmask())
+        res = self.predictor(page_id, page_image, getmask())
         self.logger.debug("Finished segmentation, serializing")
         idx_line = 0
         if self.use_legacy:

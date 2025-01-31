@@ -2,10 +2,11 @@ from __future__ import absolute_import
 from os.path import join
 from typing import Optional
 
+import kraken.binarization
+
 from ocrd.processor.base import OcrdPageResult
 from ocrd.processor.ocrd_page_result import OcrdPageResultImage
 
-import kraken.binarization
 from ocrd import Processor
 from ocrd_utils import assert_file_grp_cardinality, getLogger, make_file_id, MIMETYPE_PAGE
 from ocrd_models.ocrd_page import AlternativeImageType, OcrdPage, to_xml

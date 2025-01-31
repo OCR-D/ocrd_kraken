@@ -2,6 +2,7 @@ from typing import Optional, Union
 from ocrd.processor.base import OcrdPageResult
 import regex
 import itertools
+from collections import defaultdict
 import numpy as np
 from scipy.sparse.csgraph import minimum_spanning_tree
 from shapely.geometry import Polygon, LineString, box as Rectangle
@@ -37,6 +38,38 @@ from ocrd_models.ocrd_page_generateds import (
     TextLineOrderSimpleType
 )
 
+from .common import KrakenPredictor
+
+class KrakenRecognizePredictor(KrakenPredictor):
+    # workaround for Kraken's unpicklable defaultdict choice
+    class DefaultDict(defaultdict):
+        def __init__(self, default=None):
+            self.default = default
+            super().__init__()
+        def default_factory(self):
+            return self.default
+    def setup(self):
+        import torch
+        from kraken.lib.models import load_any
+        model = self.parameter['model']
+        self.logger.info("loading model '%s'", model)
+        device = self.parameter['device']
+        if device != 'cpu' and not torch.cuda.is_available():
+            device = 'cpu'
+        if device == 'cpu':
+            self.logger.warning("no CUDA device available. Running without GPU will be slow")
+        self.model = load_any(model, device=device)
+    def predict(self, *inputs):
+        from kraken.rpred import mm_rpred
+        if not len(inputs):
+            return self.model.nn.input[1] == 1 and self.model.one_channel_mode == '1'
+        image, segmentation = inputs
+        nets = __class__.DefaultDict(self.model)
+        result = mm_rpred(nets, image, segmentation,
+                          self.parameter['pad'],
+                          self.parameter['bidi_reordering'])
+        # we must exhaust the generator before enqueuing
+        return list(result)
 
 class KrakenRecognize(Processor):
 
@@ -48,23 +81,17 @@ class KrakenRecognize(Processor):
         """
         Load model, set predict function
         """
+        parameter = dict(self.parameter)
+        parameter['model'] = self.resolve_resource(parameter['model'])
+        self.predictor = KrakenRecognizePredictor(self.logger, parameter)
+        self.predictor.start()
+        self.binary = self.predictor("") # blocks until model is loaded
+        self.logger.info("loaded %s model %s", "binary" if self.binary else "grayscale", self.parameter["model"])
 
-        import torch
-        from kraken.rpred import rpred
-        from kraken.lib.models import load_any
-        model_fname = self.resolve_resource(self.parameter['model'])
-        self.logger.info("loading model '%s'", model_fname)
-        device = self.parameter['device']
-        if device != 'cpu' and not torch.cuda.is_available():
-            device = 'cpu'
-        if device == 'cpu':
-            self.logger.warning("no CUDA device available. Running without GPU will be slow")
-        self.model = load_any(model_fname, device=device)
-        def predict(page_image, segmentation):
-            return rpred(self.model, page_image, segmentation,
-                         self.parameter['pad'],
-                         self.parameter['bidi_reordering'])
-        self.predict = predict
+    def shutdown(self):
+        if getattr(self, 'predictor', None):
+            self.predictor.shutdown()
+            del self.predictor
 
     def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """Recognize text on lines with Kraken.
@@ -96,8 +123,7 @@ class KrakenRecognize(Processor):
         page_image, page_coords, _ = self.workspace.image_from_page(
             page, page_id,
             feature_selector="binarized"
-            if self.model.nn.input[1] == 1 and self.model.one_channel_mode == '1'
-            else '')
+            if self.binary else '')
         page_rect = Rectangle(0, 0, page_image.width - 1, page_image.height - 1)
         # TODO: find out whether kraken.lib.xml.XMLPage(...).to_container() is adequate
 
@@ -152,7 +178,7 @@ class KrakenRecognize(Processor):
                                     text_direction='horizontal-lr',
                                     type=segtype,
                                     imagename=page_id)
-        for idx_line, ocr_record in enumerate(self.predict(page_image, segmentation)):
+        for idx_line, ocr_record in enumerate(self.predictor(page_id, page_image, segmentation)):
             line = all_lines[idx_line]
             id_line = line.id
             if not ocr_record.prediction and not ocr_record.cuts:
