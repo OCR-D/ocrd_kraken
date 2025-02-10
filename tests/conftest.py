@@ -42,6 +42,7 @@ def workspace(tmpdir, pytestconfig, request):
             else:
                 yield {'workspace': workspace}
         config.reset_defaults()
+        disableLogging()
     return _make_workspace
 
 
