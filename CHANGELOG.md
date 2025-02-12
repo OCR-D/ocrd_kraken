@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Port the processors to use the OCR-D/core v3 API, #44
+  * Spawn background processes for segmentation and recognition, #44
+  * Refactor tests and test under various conditions (w/o METS caching, page parallel processing), #44
+
 ## [0.4.1] - 2024-05-29
 
 Fixed:

@@ -1,6 +1,8 @@
-from os.path import join
+from typing import Optional, Union
+from ocrd.processor.base import OcrdPageResult
 import regex
 import itertools
+from collections import defaultdict
 import numpy as np
 from scipy.sparse.csgraph import minimum_spanning_tree
 from shapely.geometry import Polygon, LineString, box as Rectangle
@@ -8,9 +10,6 @@ from shapely.ops import unary_union, nearest_points
 
 from ocrd import Processor
 from ocrd_utils import (
-    getLogger,
-    make_file_id,
-    assert_file_grp_cardinality,
     coordinates_of_segment,
     coordinates_for_segment,
     bbox_from_polygon,
@@ -18,12 +17,10 @@ from ocrd_utils import (
     points_from_bbox,
     polygon_from_points,
     xywh_from_points,
-    bbox_from_points,
     transform_coordinates,
-    MIMETYPE_PAGE,
 )
-from ocrd_modelfactory import page_from_file
 from ocrd_models.ocrd_page import (
+    OcrdPage,
     RegionRefType,
     RegionRefIndexedType,
     OrderedGroupType,
@@ -35,52 +32,72 @@ from ocrd_models.ocrd_page import (
     WordType,
     GlyphType,
     CoordsType,
-    to_xml
 )
 from ocrd_models.ocrd_page_generateds import (
     ReadingDirectionSimpleType,
     TextLineOrderSimpleType
 )
 
-from ocrd_kraken.config import OCRD_TOOL
+from .common import KrakenPredictor
 
-class KrakenRecognize(Processor):
-
-    def __init__(self, *args, **kwargs):
-        kwargs['ocrd_tool'] = OCRD_TOOL['tools']['ocrd-kraken-recognize']
-        kwargs['version'] = OCRD_TOOL['version']
-        super().__init__(*args, **kwargs)
-        if hasattr(self, 'output_file_grp'):
-            # processing context
-            self.setup()
-
+class KrakenRecognizePredictor(KrakenPredictor):
+    # workaround for Kraken's unpicklable defaultdict choice
+    class DefaultDict(defaultdict):
+        def __init__(self, default=None):
+            self.default = default
+            super().__init__()
+        def default_factory(self):
+            return self.default
     def setup(self):
-        """
-        Load models
-        """
-        log = getLogger('processor.KrakenRecognize')
         import torch
-        from kraken.rpred import rpred
         from kraken.lib.models import load_any
-        model_fname = self.resolve_resource(self.parameter['model'])
-        log.info("loading model '%s'", model_fname)
+        model = self.parameter['model']
+        self.logger.info("loading model '%s'", model)
         device = self.parameter['device']
         if device != 'cpu' and not torch.cuda.is_available():
             device = 'cpu'
         if device == 'cpu':
-            log.warning("no CUDA device available. Running without GPU will be slow")
-        self.model = load_any(model_fname, device=device)
-        def predict(page_image, segmentation):
-            return rpred(self.model, page_image, segmentation,
-                         self.parameter['pad'],
-                         self.parameter['bidi_reordering'])
-        self.predict = predict
+            self.logger.warning("no CUDA device available. Running without GPU will be slow")
+        self.model = load_any(model, device=device)
+    def predict(self, *inputs):
+        from kraken.rpred import mm_rpred
+        if not len(inputs):
+            return self.model.nn.input[1] == 1 and self.model.one_channel_mode == '1'
+        image, segmentation = inputs
+        nets = __class__.DefaultDict(self.model)
+        result = mm_rpred(nets, image, segmentation,
+                          self.parameter['pad'],
+                          self.parameter['bidi_reordering'])
+        # we must exhaust the generator before enqueuing
+        return list(result)
 
-    def process(self):
+class KrakenRecognize(Processor):
+
+    @property
+    def executable(self):
+        return 'ocrd-kraken-recognize'
+
+    def setup(self):
+        """
+        Load model, set predict function
+        """
+        parameter = dict(self.parameter)
+        parameter['model'] = self.resolve_resource(parameter['model'])
+        self.predictor = KrakenRecognizePredictor(self.logger, parameter)
+        self.predictor.start()
+        self.binary = self.predictor("") # blocks until model is loaded
+        self.logger.info("loaded %s model %s", "binary" if self.binary else "grayscale", self.parameter["model"])
+
+    def shutdown(self):
+        if getattr(self, 'predictor', None):
+            self.predictor.shutdown()
+            del self.predictor
+
+    def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """Recognize text on lines with Kraken.
 
-        Open and deserialise each PAGE input file and its respective image,
-        then iterate over the element hierarchy down to the line level.
+        Open the parsed PAGE-XML file, then iterate over the element hierarchy
+        down to the line level.
 
         Set up Kraken to recognise each text line (via coordinates into
         the higher-level image, or from the alternative image. If the model
@@ -94,149 +111,136 @@ class KrakenRecognize(Processor):
         into additional TextEquiv at each level, and make the higher levels
         consistent with that (by concatenation joined by whitespace).
 
-        Produce a new output file by serialising the resulting hierarchy.
+        Return the resulting hierarchy.
         """
+        assert self.workspace
         from kraken.containers import Segmentation, BaselineLine, BBoxLine
-        log = getLogger('processor.KrakenRecognize')
-        assert_file_grp_cardinality(self.input_file_grp, 1)
-        assert_file_grp_cardinality(self.output_file_grp, 1)
 
-        for n, input_file in enumerate(self.input_files):
-            page_id = input_file.pageId or input_file.ID
-            log.info("INPUT FILE %i / %s of %s", n, page_id, len(self.input_files))
-            pcgts = page_from_file(self.workspace.download_file(input_file))
-            self.add_metadata(pcgts)
-            page = pcgts.get_Page()
-            page_image, page_coords, _ = self.workspace.image_from_page(
-                page, page_id,
-                feature_selector="binarized"
-                if self.model.nn.input[1] == 1 and self.model.one_channel_mode == '1'
-                else '')
-            page_rect = Rectangle(0, 0, page_image.width - 1, page_image.height - 1)
-            # todo: find out whether kraken.lib.xml.XMLPage(...).to_container() is adequate
+        pcgts = input_pcgts[0]
+        assert pcgts
+        page = pcgts.get_Page()
+        assert page
+        page_image, page_coords, _ = self.workspace.image_from_page(
+            page, page_id,
+            feature_selector="binarized"
+            if self.binary else '')
+        page_rect = Rectangle(0, 0, page_image.width - 1, page_image.height - 1)
+        # TODO: find out whether kraken.lib.xml.XMLPage(...).to_container() is adequate
 
-            all_lines = page.get_AllTextLines()
-            # assumes that missing baselines are rare, if any
-            if any(line.Baseline for line in all_lines):
-                log.info("Converting PAGE to Kraken Segmentation (baselines)")
-                segtype = 'baselines'
-            else:
-                log.info("Converting PAGE to Kraken Segmentation (boxes only)")
-                segtype = 'bbox'
-            scale = 0.5 * np.median([xywh_from_points(line.Coords.points)['h'] for line in all_lines])
-            log.info("Estimated scale: %.1f", scale)
-            seglines = []
-            for line in all_lines:
-                # FIXME: see whether model prefers baselines or bbox crops (seg_type)
-                # FIXME: even if we do not have baselines, emulating baseline+boundary might be useful to prevent automatic center normalization
-                poly = coordinates_of_segment(line, None, page_coords)
-                poly = make_valid(Polygon(poly))
-                poly = poly.intersection(page_rect)
-                if segtype == 'baselines':
-                    if line.Baseline is None:
+        all_lines = page.get_AllTextLines()
+        # assumes that missing baselines are rare, if any
+        if any(line.Baseline for line in all_lines):
+            self.logger.info("Converting PAGE to Kraken Segmentation (baselines)")
+            segtype = 'baselines'
+        else:
+            self.logger.info("Converting PAGE to Kraken Segmentation (boxes only)")
+            segtype = 'bbox'
+        scale = 0.5 * np.median([xywh_from_points(line.Coords.points)['h'] for line in all_lines])
+        self.logger.info("Estimated scale: %.1f", scale)
+        seglines = []
+        for line in all_lines:
+            # FIXME: see whether model prefers baselines or bbox crops (seg_type)
+            # FIXME: even if we do not have baselines, emulating baseline+boundary might be useful to prevent automatic center normalization
+            poly = coordinates_of_segment(line, None, page_coords)
+            poly = make_valid(Polygon(poly))
+            poly = poly.intersection(page_rect)
+            if segtype == 'baselines':
+                if line.Baseline is None:
+                    base = dummy_baseline_of_segment(line, page_coords)
+                else:
+                    base = baseline_of_segment(line, page_coords)
+                    if len(base) < 2 or np.abs(np.mean(base[0] - base[-1])) <= 1:
                         base = dummy_baseline_of_segment(line, page_coords)
-                    else:
-                        base = baseline_of_segment(line, page_coords)
-                        if len(base) < 2 or np.abs(np.mean(base[0] - base[-1])) <= 1:
-                            base = dummy_baseline_of_segment(line, page_coords)
-                        elif not LineString(base).intersects(poly):
-                            base = dummy_baseline_of_segment(line, page_coords)
-                    # kraken expects baseline to be fully contained in boundary
-                    base = LineString(base)
-                    if poly.is_empty:
-                        poly = polygon_from_baseline(base, scale=scale)
-                    elif not base.within(poly):
-                        poly = join_polygons([poly, polygon_from_baseline(base, scale=scale)],
-                                             loc=line.id, scale=scale)
-                    seglines.append(BaselineLine(baseline=list(map(tuple, base.coords)),
-                                                 boundary=list(map(tuple, poly.exterior.coords)),
-                                                 id=line.id,
-                                                 tags={'type': 'default'}))
-                    # write back
-                    base = coordinates_for_segment(base.coords, None, page_coords)
-                    line.set_Baseline(BaselineType(points=points_from_polygon(base)))
-                    poly = coordinates_for_segment(poly.exterior.coords[:-1], None, page_coords)
-                    line.set_Coords(CoordsType(points=points_from_polygon(poly)))
-                else:
-                    seglines.append(BBoxLine(bbox=poly.envelope.bounds,
-                                             id=line.id))
+                    elif not LineString(base).intersects(poly):
+                        base = dummy_baseline_of_segment(line, page_coords)
+                # kraken expects baseline to be fully contained in boundary
+                base = LineString(base)
+                if poly.is_empty:
+                    poly = polygon_from_baseline(base, scale=scale)
+                elif not base.within(poly):
+                    poly = join_polygons([poly, polygon_from_baseline(base, scale=scale)],
+                                         loc=line.id, scale=scale)
+                seglines.append(BaselineLine(baseline=list(map(tuple, base.coords)),
+                                             boundary=list(map(tuple, poly.exterior.coords)),
+                                             id=line.id,
+                                             tags={'type': 'default'}))
+                # write back
+                base = coordinates_for_segment(base.coords, None, page_coords)
+                line.set_Baseline(BaselineType(points=points_from_polygon(base)))
+                poly = coordinates_for_segment(poly.exterior.coords[:-1], None, page_coords)
+                line.set_Coords(CoordsType(points=points_from_polygon(poly)))
+            else:
+                seglines.append(BBoxLine(bbox=poly.envelope.bounds,
+                                         id=line.id))
 
-            segmentation = Segmentation(lines=seglines,
-                                        script_detection=False,
-                                        text_direction='horizontal-lr',
-                                        type=segtype,
-                                        imagename=page_id)
-            for idx_line, ocr_record in enumerate(self.predict(page_image, segmentation)):
-                line = all_lines[idx_line]
-                id_line = line.id
-                if not ocr_record.prediction and not ocr_record.cuts:
-                    log.warning('No results for line "%s"', line.id)
-                    continue
-                text_line = ocr_record.prediction
-                if len(ocr_record.confidences) > 0:
-                    conf_line = sum(ocr_record.confidences) / len(ocr_record.confidences)
+        segmentation = Segmentation(lines=seglines,
+                                    script_detection=False,
+                                    text_direction='horizontal-lr',
+                                    type=segtype,
+                                    imagename=page_id)
+        for idx_line, ocr_record in enumerate(self.predictor(page_id, page_image, segmentation)):
+            line = all_lines[idx_line]
+            id_line = line.id
+            if not ocr_record.prediction and not ocr_record.cuts:
+                self.logger.warning('No results for line "%s"', line.id)
+                continue
+            text_line = ocr_record.prediction
+            if len(ocr_record.confidences) > 0:
+                conf_line = sum(ocr_record.confidences) / len(ocr_record.confidences)
+            else:
+                conf_line = None
+            if self.parameter['overwrite_text']:
+                line.TextEquiv = []
+            line.add_TextEquiv(TextEquivType(Unicode=text_line, conf=conf_line))
+            idx_word = 0
+            line_offset = 0
+            for text_word in regex.splititer(r'(\s+)', text_line):
+                next_offset = line_offset + len(text_word)
+                cuts_word = list(map(list, ocr_record.cuts[line_offset:next_offset]))
+                # fixme: kraken#98 says the Pytorch CTC output is too impoverished to yield good glyph stops
+                # as a workaround, here we just steal from the next glyph start, respectively:
+                if len(ocr_record.cuts) > next_offset + 1:
+                    cuts_word.extend(list(map(list, ocr_record.cuts[next_offset:next_offset+1])))
                 else:
-                    conf_line = None
-                if self.parameter['overwrite_text']:
-                    line.TextEquiv = []
-                line.add_TextEquiv(TextEquivType(Unicode=text_line, conf=conf_line))
-                idx_word = 0
-                line_offset = 0
-                for text_word in regex.splititer(r'(\s+)', text_line):
-                    next_offset = line_offset + len(text_word)
-                    cuts_word = list(map(list, ocr_record.cuts[line_offset:next_offset]))
-                    # fixme: kraken#98 says the Pytorch CTC output is too impoverished to yield good glyph stops
-                    # as a workaround, here we just steal from the next glyph start, respectively:
-                    if len(ocr_record.cuts) > next_offset + 1:
-                        cuts_word.extend(list(map(list, ocr_record.cuts[next_offset:next_offset+1])))
-                    else:
-                        cuts_word.append(list(ocr_record.cuts[-1]))
-                    confidences_word = ocr_record.confidences[line_offset:next_offset]
-                    line_offset = next_offset
-                    if len(text_word.strip()) == 0:
-                        continue
-                    id_word = '%s_word_%s' % (id_line, idx_word + 1)
-                    idx_word += 1
-                    poly_word = [point for cut in cuts_word for point in cut]
-                    bbox_word = bbox_from_polygon(coordinates_for_segment(poly_word, None, page_coords))
+                    cuts_word.append(list(ocr_record.cuts[-1]))
+                confidences_word = ocr_record.confidences[line_offset:next_offset]
+                line_offset = next_offset
+                if len(text_word.strip()) == 0:
+                    continue
+                id_word = '%s_word_%s' % (id_line, idx_word + 1)
+                idx_word += 1
+                poly_word = [point for cut in cuts_word for point in cut]
+                bbox_word = bbox_from_polygon(coordinates_for_segment(poly_word, None, page_coords))
+                # avoid zero-size coords on ties
+                bbox_word = np.array(bbox_word, dtype=int)
+                if np.prod(bbox_word[2:4] - bbox_word[0:2]) == 0:
+                    bbox_word[2:4] += 1
+                if len(confidences_word) > 0:
+                    conf_word = sum(confidences_word) / len(confidences_word)
+                else:
+                    conf_word = None
+                word = WordType(id=id_word,
+                                Coords=CoordsType(points=points_from_bbox(*bbox_word)))
+                word.add_TextEquiv(TextEquivType(Unicode=text_word, conf=conf_word))
+                for idx_glyph, text_glyph in enumerate(text_word):
+                    id_glyph = '%s_glyph_%s' % (id_word, idx_glyph + 1)
+                    poly_glyph = cuts_word[idx_glyph] + cuts_word[idx_glyph + 1]
+                    bbox_glyph = bbox_from_polygon(coordinates_for_segment(poly_glyph, None, page_coords))
                     # avoid zero-size coords on ties
-                    bbox_word = np.array(bbox_word, dtype=int)
-                    if np.prod(bbox_word[2:4] - bbox_word[0:2]) == 0:
-                        bbox_word[2:4] += 1
-                    if len(confidences_word) > 0:
-                        conf_word = sum(confidences_word) / len(confidences_word)
-                    else:
-                        conf_word = None
-                    word = WordType(id=id_word,
-                                    Coords=CoordsType(points=points_from_bbox(*bbox_word)))
-                    word.add_TextEquiv(TextEquivType(Unicode=text_word, conf=conf_word))
-                    for idx_glyph, text_glyph in enumerate(text_word):
-                        id_glyph = '%s_glyph_%s' % (id_word, idx_glyph + 1)
-                        poly_glyph = cuts_word[idx_glyph] + cuts_word[idx_glyph + 1]
-                        bbox_glyph = bbox_from_polygon(coordinates_for_segment(poly_glyph, None, page_coords))
-                        # avoid zero-size coords on ties
-                        bbox_glyph = np.array(bbox_glyph, dtype=int)
-                        if np.prod(bbox_glyph[2:4] - bbox_glyph[0:2]) == 0:
-                            bbox_glyph[2:4] += 1
-                        conf_glyph = confidences_word[idx_glyph]
-                        glyph = GlyphType(id=id_glyph,
-                                          Coords=CoordsType(points=points_from_bbox(*bbox_glyph)))
-                        glyph.add_TextEquiv(TextEquivType(Unicode=text_glyph, conf=conf_glyph))
-                        word.add_Glyph(glyph)
-                    line.add_Word(word)
-                log.info('Recognized line "%s"', line.id)
+                    bbox_glyph = np.array(bbox_glyph, dtype=int)
+                    if np.prod(bbox_glyph[2:4] - bbox_glyph[0:2]) == 0:
+                        bbox_glyph[2:4] += 1
+                    conf_glyph = confidences_word[idx_glyph]
+                    glyph = GlyphType(id=id_glyph,
+                                      Coords=CoordsType(points=points_from_bbox(*bbox_glyph)))
+                    glyph.add_TextEquiv(TextEquivType(Unicode=text_glyph, conf=conf_glyph))
+                    word.add_Glyph(glyph)
+                line.add_Word(word)
+            self.logger.info('Recognized line "%s"', line.id)
             page_update_higher_textequiv_levels('line', pcgts)
 
-            log.info("Finished recognition, serializing")
-            file_id = make_file_id(input_file, self.output_file_grp)
-            pcgts.set_pcGtsId(file_id)
-            self.workspace.add_file(
-                ID=file_id,
-                file_grp=self.output_file_grp,
-                pageId=input_file.pageId,
-                mimetype=MIMETYPE_PAGE,
-                local_filename=join(self.output_file_grp, f'{file_id}.xml'),
-                content=to_xml(pcgts))
+        self.logger.info("Finished recognition, serializing")
+        return OcrdPageResult(pcgts)
 
 # zzz should go into core ocrd_utils
 def baseline_of_segment(segment, coords):
@@ -251,7 +255,7 @@ def dummy_baseline_of_segment(segment, coords, yrel=0.2):
     return [[xmin, ymid], [xmax, ymid]]
 
 # zzz should go into core ocrd_utils
-def polygon_from_baseline(baseline, scale=20):
+def polygon_from_baseline(baseline, scale : Union[float, np.floating] = 20):
     if not isinstance(baseline, LineString):
         baseline = LineString(baseline)
     ltr = baseline.coords[0][0] < baseline.coords[-1][0]
@@ -261,7 +265,7 @@ def polygon_from_baseline(baseline, scale=20):
                                        scale=scale))
     return polygon
 
-def join_polygons(polygons, loc='', scale=20):
+def join_polygons(polygons, loc='', scale : Union[float, np.floating] = 20):
     """construct concave hull (alpha shape) from input polygons"""
     # compoundp = unary_union(polygons)
     # jointp = compoundp.convex_hull

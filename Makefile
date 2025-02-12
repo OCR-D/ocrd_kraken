@@ -71,7 +71,7 @@ docker:
 
 # Run test
 test: tests/assets
-	$(PYTHON) -m pytest tests $(PYTEST_ARGS)
+	$(PYTHON) -m pytest  tests --durations=0 $(PYTEST_ARGS)
 
 #
 # Assets

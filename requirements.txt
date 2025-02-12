@@ -1,5 +1,6 @@
-ocrd >= 2.65
+ocrd >= 3.0.2
 kraken >= 5.0
 scipy
 shapely
+regex
 
