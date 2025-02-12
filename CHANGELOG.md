@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0] - 2025-02-12
+
 Changed:
 
   * Port the processors to use the OCR-D/core v3 API, #44
@@ -118,6 +120,7 @@ Changed:
 Initial release
 
 <!-- link-labels -->
+[1.0.0]: v1.0.0...v0.4.1
 [0.4.1]: v0.4.1...v0.4.0
 [0.4.0]: v0.4.0...v0.3.1
 [0.3.1]: v0.3.1...v0.3.0
