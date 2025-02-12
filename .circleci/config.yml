@@ -49,7 +49,8 @@ workflows:
   version: 2
   build:
     jobs:
-      - build-python38
-      - build-python39
-      - build-python310
-      - build-python311
+      # Disabled as of 2025-02-12 due to erratic behavior (CI in GH Action does work)
+      # - build-python38
+      # - build-python39
+      # - build-python310
+      # - build-python311
