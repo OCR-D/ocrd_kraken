@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.1] - 2025-02-12
+
+Fixed:
+
+  * Version in `ocrd-tool.json` now updated
+
 ## [1.0.0] - 2025-02-12
 
 Changed:
@@ -120,6 +126,7 @@ Changed:
 Initial release
 
 <!-- link-labels -->
+[1.0.1]: v1.0.1...v1.0.0
 [1.0.0]: v1.0.0...v0.4.1
 [0.4.1]: v0.4.1...v0.4.0
 [0.4.0]: v0.4.0...v0.3.1
