@@ -31,14 +31,9 @@ ENV XDG_DATA_HOME /usr/local/share
 ENV XDG_CONFIG_HOME /usr/local/share/ocrd-resources
 
 WORKDIR /build-ocrd
-COPY setup.py .
-COPY ocrd_kraken ./ocrd_kraken
-COPY ocrd_kraken/ocrd-tool.json .
-COPY README.md .
-COPY requirements.txt .
-COPY Makefile .
+COPY . .
 # prepackage ocrd-tool.json as ocrd-all-tool.json
-RUN ocrd ocrd-tool ocrd-tool.json dump-tools > $(dirname $(ocrd bashlib filename))/ocrd-all-tool.json
+RUN ocrd ocrd-tool ocrd_kraken/ocrd-tool.json dump-tools > $(dirname $(ocrd bashlib filename))/ocrd-all-tool.json
 # install everything and reduce image size
 RUN make deps-ubuntu \
     && make deps install \
