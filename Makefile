@@ -92,4 +92,4 @@ tests/assets: repo/assets
 	mkdir -p tests/assets
 	cp -a repo/assets/data/* tests/assets
 
-.PHONY: docker install install-dev deps deps-ubuntu deps-test test help
+.PHONY: docker install install-dev build deps deps-ubuntu deps-test test help
