@@ -1,0 +1,96 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel", "setuptools-ocrd"]
+
+[project]
+name = "ocrd_kraken"
+authors = [
+    {name = "Robert Sachunsky", email = "sachunsky@informatik.uni-leipzig.de"},
+    {name = "Konstantin Baierer", email = "unixprog@gmail.com"},
+]
+description = "Recognize text using Kraken OCR and the OCR-D framework"
+readme = "README.md"
+license = {text = "Apache License 2.0"}
+requires-python = ">=3.8"
+keywords = ["ocr", "ocr-d", "kraken-ocr"]
+
+dynamic = ["version", "dependencies", "optional-dependencies"]
+
+# https://pypi.org/classifiers/
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Other Audience",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Text Processing",
+]
+
+[project.scripts]
+ocrd-kraken-recognize = "ocrd_kraken.cli.recognize:cli"
+ocrd-kraken-segment = "ocrd_kraken.cli.segment:cli"
+ocrd-kraken-binarize = "ocrd_kraken.cli.binarize:cli"
+
+[project.urls]
+Homepage = "https://github.com/OCR-D/ocrd_kraken"
+Repository = "https://github.com/OCR-D/ocrd_kraken.git"
+
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+#optional-dependencies.dev = {file = ["requirements_dev.txt"]}
+optional-dependencies.test = {file = ["requirements_test.txt"]}
+
+[tool.setuptools]
+packages = ["ocrd_kraken", "ocrd_kraken.cli"]
+package-data = {"*" = ["ocrd-tool.json"]}
+
+[tool.pytest.ini_options]
+minversion = 6.0
+addopts = "--strict-markers"
+markers = [
+    "integration: integration tests",
+]
+
+
+[tool.mypy]
+plugins = ["numpy.typing.mypy_plugin"]
+
+ignore_missing_imports = true
+
+
+strict = true
+
+disallow_subclassing_any = false
+# ❗ error: Class cannot subclass "Processor" (has type "Any")
+disallow_any_generics = false
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+
+[tool.coverage.run]
+branch = true
+source = [
+    "ocrd_kraken"
+]
+concurrency = [
+    "thread",
+    "multiprocessing"
+]
+
+[tool.coverage.report]
+exclude_also = [
+    "if self\\.debug",
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+ignore_errors = true
+omit = [
+    "ocrd_kraken/cli"
+]

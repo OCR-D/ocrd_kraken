@@ -8,7 +8,7 @@ PYTHONIOENCODING=utf8
 
 # Docker container tag ("$(DOCKER_TAG)")
 DOCKER_TAG = 'ocrd/kraken'
-DOCKER_BASE_IMAGE = docker.io/ocrd/core-cuda-torch:v2.70.0
+DOCKER_BASE_IMAGE = docker.io/ocrd/core-cuda-torch:v3.1.0
 
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
@@ -92,4 +92,4 @@ tests/assets: repo/assets
 	mkdir -p tests/assets
 	cp -a repo/assets/data/* tests/assets
 
-.PHONY: docker install install-dev deps deps-ubuntu deps-test test help
+.PHONY: docker install install-dev build deps deps-ubuntu deps-test test help
