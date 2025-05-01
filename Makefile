@@ -7,8 +7,9 @@ LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
 
 # Docker container tag ("$(DOCKER_TAG)")
-DOCKER_TAG = 'ocrd/kraken'
-DOCKER_BASE_IMAGE = docker.io/ocrd/core-cuda-torch:v3.1.0
+DOCKER_TAG ?= 'ocrd/kraken'
+DOCKER_BASE_IMAGE ?= docker.io/ocrd/core-cuda-torch:latest
+DOCKER ?= docker
 
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
@@ -63,7 +64,7 @@ build:
 
 # Build docker image
 docker:
-	docker build \
+	$(DOCKER) build \
 	--build-arg DOCKER_BASE_IMAGE=$(DOCKER_BASE_IMAGE) \
 	--build-arg VCS_REF=$$(git rev-parse --short HEAD) \
 	--build-arg BUILD_DATE=$$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
