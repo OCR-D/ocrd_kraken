@@ -225,11 +225,15 @@ class KrakenSegment(Processor):
             for idx_region, (type_, region) in enumerate(regions):
                 region_poly = coordinates_for_segment(region.boundary, None, page_coords)
                 region_poly = make_valid(geom.Polygon(region_poly))
-                region_type = self.parameter['blla_classes'][type_]
+                region_args = dict(id=f'region_{idx_region + 1}',
+                                   Coords=CoordsType(points=points_from_polygon(
+                                       region_poly.exterior.coords[:-1])))
+                region_type = self.parameter['blla_classes'][type_].split(':')
+                if len(region_type) > 1:
+                    region_args['type_'] = region_type[1]
+                region_type = region_type[0]
                 region_class = getattr(ocrd_models.ocrd_page, region_type + 'Type')
-                region_elem = region_class(
-                        id=f'region_{idx_region + 1}',
-                        Coords=CoordsType(points=points_from_polygon(region_poly.exterior.coords[:-1])))
+                region_elem = region_class(**region_args)
                 getattr(page, 'add_' + region_type)(region_elem)
                 if not region_type == 'TextRegion':
                     continue
